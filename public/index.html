@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Zamindar - India's Running Territory Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+                  font-family: 'Tiro Devanagari Hindi', Georgia, serif;
+                  background: #1a0f0a;
+                  color: #f5e6d3;
+                  min-height: 100vh;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+          }
+          .hero {
+                  text-align: center;
+                  padding: 2rem;
+                  max-width: 800px;
+          }
+          h1 {
+                  font-size: 4rem;
+                  color: #ff6b00;
+                  margin-bottom: 0.5rem;
+                  text-shadow: 0 2px 10px rgba(255, 107, 0, 0.3);
+          }
+          .subtitle {
+                  font-size: 1.5rem;
+                  color: #d4a574;
+                  margin-bottom: 2rem;
+          }
+          .tagline {
+                  font-size: 1.1rem;
+                  line-height: 1.8;
+                  color: #c4a882;
+                  margin-bottom: 3rem;
+          }
+          .cta-buttons {
+                  display: flex;
+                  gap: 1rem;
+                  justify-content: center;
+                  flex-wrap: wrap;
+          }
+          .btn {
+                  display: inline-block;
+                  padding: 1rem 2.5rem;
+                  border-radius: 8px;
+                  text-decoration: none;
+                  font-size: 1.1rem;
+                  font-weight: bold;
+                  transition: all 0.3s ease;
+                  cursor: pointer;
+                  border: none;
+          }
+          .btn-primary {
+                  background: linear-gradient(135deg, #ff6b00, #ff8533);
+                  color: white;
+                  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+          }
+          .btn-primary:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 20px rgba(255, 107, 0, 0.6);
+          }
+          .btn-secondary {
+                  background: transparent;
+                  color: #ff6b00;
+                  border: 2px solid #ff6b00;
+          }
+          .btn-secondary:hover {
+                  background: rgba(255, 107, 0, 0.1);
+          }
+          .features {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                  gap: 2rem;
+                  margin-top: 4rem;
+                  padding: 0 1rem;
+          }
+          .feature {
+                  text-align: center;
+                  padding: 1.5rem;
+          }
+          .feature-icon {
+                  font-size: 2.5rem;
+                  margin-bottom: 0.5rem;
+          }
+          .feature h3 {
+                  color: #ff8533;
+                  margin-bottom: 0.5rem;
+          }
+          .feature p {
+                  color: #a08060;
+                  font-size: 0.95rem;
+          }
+          .stats {
+                  margin-top: 3rem;
+                  display: flex;
+                  gap: 3rem;
+                  justify-content: center;
+                  flex-wrap: wrap;
+          }
+          .stat {
+                  text-align: center;
+          }
+          .stat-number {
+                  font-size: 2rem;
+                  color: #ff6b00;
+                  font-weight: bold;
+          }
+          .stat-label {
+                  color: #a08060;
+                  font-size: 0.85rem;
+          }
+          .footer {
+                  margin-top: 4rem;
+                  padding: 2rem;
+                  color: #5a4030;
+                  font-size: 0.85rem;
+          }
+          @media (max-width: 600px) {
+                  h1 { font-size: 2.5rem; }
+                  .subtitle { font-size: 1.2rem; }
+          }
+        </style>
+  </head>
+  <body>
+      <div class="hero">
+            <h1>Zamindar</h1>
+          <p class="subtitle">India's Running Territory Game</p>p>
+          <p class="tagline">
+            Run through your city. Claim territory on a live map. Defend your zameen by patrolling it.
+            Every kilometer you run becomes land you own. Every rival who crosses your path starts a siege.
+          </p>p>
+          <div class="cta-buttons">
+                <a href="/zamindar.html" class="btn btn-primary">View the Map</a>a>
+                <a href="/auth/strava" class="btn btn-secondary">Connect Strava</a>a>
+          </div>div>
+          <div class="features">
+                <div class="feature">
+                        <div class="feature-icon">🏃</div>div>
+                        <h3>Run to Claim</h3>
+                        <p>Every run creates a territory polygon on the map. The more you run, the more zameen you own.</p>
+                </div>div>
+                <div class="feature">
+                        <div class="feature-icon">⚔️</div>div>
+                        <h3>Defend Your Land</h3>
+                        <p>When territories overlap, a siege begins. Patrol your land within 48 hours or lose it.</p>
+                </div>div>
+                <div class="feature">
+                        <div class="feature-icon">🏰</div>div>
+                        <h3>Capture Cities</h3>
+                        <p>Run through 15 major Indian cities. The runner with the most territory in a city becomes its Zamindar.</p>
+                </div>div>
+          </div>div>
+          <div class="stats">
+                <div class="stat">
+                        <div class="stat-number">15</div>div>
+                        <div class="stat-label">Cities</div>div>
+                </div>div>
+                <div class="stat">
+                        <div class="stat-number">48hr</div>div>
+                        <div class="stat-label">Siege Timer</div>div>
+                </div>div>
+                <div class="stat">
+                        <div class="stat-number">Live</div>div>
+                        <div class="stat-label">Real-time Map</div>div>
+                </div>div>
+          </div>div>
+      </div>div>
+    <div class="footer">
+        Built with Strava API, Leaflet, Supabase + PostGIS
+    </div>div>
+    <script>
+          // Detect mobile and redirect
+          if (window.innerWidth <= 768 && window.location.pathname === '/zamindar.html') {
+                  window.location.href = '/zamindar-mobile.html';
+          }
+            </script>
+  </body>
+</html>html>
+    </script></p></p></h3></h1>
+  </body>
+    </style></title>
+  </head>
