@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+      <meta name="apple-mobile-web-app-capable" content="yes">
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+      <title>Zamindar - Territory Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+          html, body { height: 100%; overflow: hidden; }
+          body {
+                  font-family: 'Tiro Devanagari Hindi', Georgia, serif;
+                  background: #1a0f0a; color: #f5e6d3;
+                  padding-top: env(safe-area-inset-top);
+                  padding-bottom: env(safe-area-inset-bottom);
+          }
+          #map {
+                  position: absolute; top: 0; left: 0; right: 0;
+                  bottom: 60px; z-index: 1;
+          }
+          .bottom-nav {
+                  position: fixed; bottom: 0; left: 0; right: 0;
+                  height: calc(60px + env(safe-area-inset-bottom));
+                  padding-bottom: env(safe-area-inset-bottom);
+                  background: #1a0f0a; border-top: 2px solid #3d2b1f;
+                  display: flex; justify-content: space-around; align-items: center;
+                  z-index: 1000;
+          }
+          .nav-btn {
+                  display: flex; flex-direction: column; align-items: center;
+                  background: none; border: none; color: #a08060;
+                  font-size: 0.7rem; font-family: inherit; cursor: pointer;
+                  padding: 8px 16px; min-width: 60px;
+          }
+          .nav-btn .icon { font-size: 1.4rem; margin-bottom: 2px; }
+          .nav-btn.active { color: #ff6b00; }
+          .map-actions {
+                  position: absolute; top: 10px; right: 10px; z-index: 1000;
+                  display: flex; flex-direction: column; gap: 6px;
+          }
+          .action-btn {
+                  width: 44px; height: 44px; border-radius: 8px;
+                  background: #1a0f0a; border: 1px solid #ff6b00;
+                  color: #ff6b00; font-size: 1.2rem; cursor: pointer;
+                  display: flex; align-items: center; justify-content: center;
+          }
+          .action-btn:active { background: #ff6b00; color: #1a0f0a; }
+          .bottom-sheet {
+                  position: fixed; bottom: 60px; left: 0; right: 0;
+                  background: #1a0f0a; border-top: 2px solid #ff6b00;
+                  border-radius: 16px 16px 0 0; z-index: 999;
+                  transform: translateY(100%); transition: transform 0.3s ease;
+                  max-height: 60vh; overflow-y: auto;
+          }
+          .bottom-sheet.open { transform: translateY(0); }
+          .sheet-handle {
+                  width: 40px; height: 4px; background: #3d2b1f;
+                  border-radius: 2px; margin: 10px auto;
+          }
+          .sheet-tabs {
+                  display: flex; border-bottom: 1px solid #3d2b1f;
+          }
+          .sheet-tab {
+                  flex: 1; padding: 10px; text-align: center;
+                  background: none; border: none; color: #a08060;
+                  font-family: inherit; font-size: 0.9rem; cursor: pointer;
+          }
+          .sheet-tab.active { color: #ff6b00; border-bottom: 2px solid #ff6b00; }
+          .sheet-content { padding: 1rem; }
+          .leaderboard-item {
+                  display: flex; justify-content: space-between;
+                  padding: 0.6rem 0; border-bottom: 1px solid #2d1f14;
+          }
+          .runner-name { color: #f5e6d3; font-size: 0.9rem; }
+          .runner-score { color: #ff6b00; font-weight: bold; }
+          .activity-item {
+                  padding: 0.5rem 0; font-size: 0.85rem;
+                  color: #a08060; border-bottom: 1px solid #2d1f14;
+          }
+          .btn-strava {
+                  display: block; width: 100%; padding: 14px;
+                  background: #fc4c02; color: white; border: none;
+                  border-radius: 8px; font-size: 1.1rem; cursor: pointer;
+                  font-family: inherit; margin-top: 0.5rem;
+          }
+          .fomo-card {
+                  position: fixed; bottom: 70px; left: 10px; right: 10px;
+                  background: linear-gradient(135deg, #2d1f14, #1a0f0a);
+                  border: 1px solid #ff6b00; border-radius: 12px;
+                  padding: 1rem; z-index: 998; display: none;
+          }
+          .fomo-card h4 { color: #ff6b00; font-size: 0.95rem; }
+          .fomo-card p { color: #a08060; font-size: 0.8rem; margin: 0.25rem 0; }
+          .fomo-close {
+                  position: absolute; top: 8px; right: 12px;
+                  background: none; border: none; color: #a08060;
+                  font-size: 1.3rem; cursor: pointer; padding: 4px;
+          }
+          .fomo-dismiss {
+                  color: #5a4030; font-size: 0.75rem; background: none;
+                  border: none; margin-top: 0.5rem; cursor: pointer;
+          }
+          .popup-content h4 { color: #ff6b00; }
+          .popup-content p { font-size: 0.9rem; margin: 3px 0; }
+          .popup-content .siege { color: #cc0000; font-weight: bold; }
+          .leaflet-popup-content-wrapper { border-radius: 10px; }
+          .leaflet-popup-close-button { width: 30px !important; height: 30px !important; font-size: 20px !important; }
+          .city-marker {
+                  background: #1a0f0a; border: 2px solid #ff6b00; border-radius: 50%;
+                  width: 28px; height: 28px; display: flex; align-items: center;
+                  justify-content: center; font-size: 11px; color: #ff6b00;
+          }
+          .sheet-backdrop {
+                  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                  background: rgba(0,0,0,0.4); z-index: 998; display: none;
+          }
+          .sheet-backdrop.open { display: block; }
+        </style>
+  </head>
+  <body>
+      <div id="map"></div>div>
+      <div class="map-actions">
+            <button class="action-btn" onclick="setView('india')" title="India view">IN</button>button>
+            <button class="action-btn" onclick="setView('my')" title="My location">MY</button>button>
+            <button class="action-btn" onclick="simulateRun()" title="Simulate run">SIM</button>button>
+      </div>div>
+      <div class="bottom-nav">
+            <button class="nav-btn active" onclick="setView('india')">
+                    <span class="icon">🗺️</span>span> Map
+            </button>button>
+            <button class="nav-btn" onclick="window.location.href='/auth/strava'">
+                    <span class="icon">🏃</span>span> Connect
+            </button>button>
+            <button class="nav-btn" onclick="toggleSheet()">
+                    <span class="icon">🏆</span>span> Zamindars
+            </button>button>
+      </div>div>
+      <div class="sheet-backdrop" id="sheet-backdrop" onclick="toggleSheet()"></div>div>
+      <div class="bottom-sheet" id="bottom-sheet">
+            <div class="sheet-handle"></div>div>
+            <div class="sheet-tabs">
+                    <button class="sheet-tab active" onclick="switchTab('leaderboard')">Zamindars</button>button>
+                    <button class="sheet-tab" onclick="switchTab('activity')">Hukumnama</button>button>
+            </div>div>
+            <div class="sheet-content" id="sheet-leaderboard">
+                    <div id="leaderboard">
+                              <div class="leaderboard-item"><span class="runner-name">Loading...</span>span></div>div>
+                    </div>div>
+            </div>div>
+            <div class="sheet-content" id="sheet-activity" style="display:none;">
+                    <div id="activity-log">
+                              <div class="activity-item">Waiting for activity...</div>div>
+                    </div>div>
+            </div>div>
+      </div>div>
+      <div class="fomo-card" id="fomo-card">
+            <button class="fomo-close" onclick="closeFomo()">&times;</button>button>
+            <h4>3 runners near you today</h4>
+          <p>Connect Strava to defend your zameen before the 48hr siege expires.</p>
+          <button class="btn-strava" onclick="window.location.href='/auth/strava'">Connect Strava</button>button>
+          <button class="fomo-dismiss" onclick="closeFomo()">Maybe later</button>button>
+      </div>div>
+  
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+          const API_BASE = window.location.origin;
+          const INDIA_CENTER = [22.5, 78.9];
+          const INDIA_ZOOM = 5;
+
+          const map = L.map('map', {
+                  zoomControl: false, detectRetina: true
+          }).setView(INDIA_CENTER, INDIA_ZOOM);
+
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                  attribution: '&copy; OSM &copy; CARTO', maxZoom: 19, detectRetina: true
+          }).addTo(map);
+
+          L.control.zoom({ position: 'topleft' }).addTo(map);
+          const territoryLayer = L.layerGroup().addTo(map);
+          const cityLayer = L.layerGroup().addTo(map);
+
+          const COLORS = ['#ff6b00','#00b4d8','#e63946','#2a9d8f','#e9c46a','#f4a261','#264653','#9b5de5'];
+          function getRunnerColor(id) { return COLORS[Math.abs(hashCode(id)) % COLORS.length]; }
+          function hashCode(str) {
+                  let hash = 0;
+                  for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
+                  return hash;
+          }
+
+          async function loadTerritories() {
+                  try {
+                            const b = map.getBounds();
+                            const res = await fetch(`${API_BASE}/map/territories?bbox=${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}`);
+                            if (!res.ok) return;
+                            const data = await res.json();
+                            territoryLayer.clearLayers();
+                            if (data.territories) {
+                                        data.territories.forEach(t => {
+                                                      if (t.geojson) {
+                                                                      const color = getRunnerColor(t.runner_id || 'default');
+                                                                      L.geoJSON(t.geojson, {
+                                                                                        style: { color, fillColor: color, fillOpacity: 0.3, weight: 2 }
+                                                                        }).bindPopup(`
+                                                                                        <div class="popup-content">
+                                                                                                          <h4>${t.runner_name || 'Runner'}</h4>
+                                                                                                                            <p>${(t.distance_m/1000).toFixed(1)} km</p>
+                                                                                                                                              ${t.contested ? '<p class="siege">Under Siege!</p>' : ''}
+                                                                                                                                                              </div>
+                                                                                                                                                                            `).addTo(territoryLayer);
+                                                      }
+                                        });
+                            }
+                  } catch (e) { console.log('Load error:', e.message); }
+          }
+
+          async function loadCities() {
+                  try {
+                            const res = await fetch(`${API_BASE}/map/cities`);
+                            if (!res.ok) return;
+                            const data = await res.json();
+                            cityLayer.clearLayers();
+                            if (data.cities) {
+                                        data.cities.forEach(c => {
+                                                      const icon = L.divIcon({ className: 'city-marker', html: c.name.charAt(0) });
+                                                      L.marker([c.lat, c.lng], { icon }).bindPopup(`
+                                                                    <div class="popup-content">
+                                                                                    <h4>${c.name}</h4>
+                                                                                                    <p>${c.multiplier}x multiplier</p>
+                                                                                                                    ${c.zamindar ? '<p>Zamindar: '+c.zamindar+'</p>' : '<p>Unclaimed!</p>'}
+                                                                                                                                  </div>
+                                                                                                                                              `).addTo(cityLayer);
+                                        });
+                            }
+                  } catch (e) {}
+          }
+
+          async function loadLeaderboard() {
+                  try {
+                            const res = await fetch(`${API_BASE}/map/leaderboard`);
+                            if (!res.ok) return;
+                            const data = await res.json();
+                            const el = document.getElementById('leaderboard');
+                            if (data.leaderboard && data.leaderboard.length > 0) {
+                                        el.innerHTML = data.leaderboard.map((r, i) => `
+                                                    <div class="leaderboard-item">
+                                                                  <span class="runner-name">${i+1}. ${r.name || r.strava_name}</span>
+                                                                                <span class="runner-score">${(r.total_area/1000000).toFixed(2)} km2</span>
+                                                                                            </div>
+                                                                                                      `).join('');
+                            } else {
+                                        el.innerHTML = '<div class="leaderboard-item"><span class="runner-name">No runners yet!</span></div>';
+                            }
+                  } catch (e) {
+                            document.getElementById('leaderboard').innerHTML = '<div class="leaderboard-item"><span class="runner-name">Connect Strava to start!</span></div>';
+                  }
+          }
+
+          function setView(view) {
+                  if (view === 'india') map.setView(INDIA_CENTER, INDIA_ZOOM);
+                  else if (view === 'my' && navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(p => {
+                                        map.setView([p.coords.latitude, p.coords.longitude], 13);
+                            });
+                  }
+          }
+
+          function simulateRun() {
+                  const c = map.getCenter();
+                  const pts = [];
+                  for (let i = 0; i < 20; i++) {
+                            const a = (i/20) * Math.PI * 2;
+                            const r = 0.005 + Math.random() * 0.003;
+                            pts.push([c.lat + Math.sin(a)*r, c.lng + Math.cos(a)*r*1.3]);
+                  }
+                  pts.push(pts[0]);
+                  L.polygon(pts, { color:'#ff6b00', fillColor:'#ff6b00', fillOpacity:0.3, weight:2 })
+                    .addTo(territoryLayer)
+                    .bindPopup('<div class="popup-content"><h4>Simulated Run</h4><p>Your territory would look like this!</p></div>')
+                    .openPopup();
+          }
+
+          let sheetOpen = false;
+          function toggleSheet() {
+                  sheetOpen = !sheetOpen;
+                  document.getElementById('bottom-sheet').classList.toggle('open', sheetOpen);
+                  document.getElementById('sheet-backdrop').classList.toggle('open', sheetOpen);
+          }
+
+          function switchTab(tab) {
+                  document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+                  document.getElementById('sheet-leaderboard').style.display = tab === 'leaderboard' ? 'block' : 'none';
+                  document.getElementById('sheet-activity').style.display = tab === 'activity' ? 'block' : 'none';
+                  event.target.classList.add('active');
+          }
+
+          function closeFomo() { document.getElementById('fomo-card').style.display = 'none'; }
+          setTimeout(() => { document.getElementById('fomo-card').style.display = 'block'; }, 4000);
+
+          // Touch drag to close sheet
+          let startY = 0;
+          document.getElementById('bottom-sheet').addEventListener('touchstart', e => { startY = e.touches[0].clientY; });
+          document.getElementById('bottom-sheet').addEventListener('touchmove', e => {
+                  const dy = e.touches[0].clientY - startY;
+                  if (dy > 80) { toggleSheet(); startY = 0; }
+          });
+
+          map.on('moveend', loadTerritories);
+          loadTerritories();
+          loadCities();
+          loadLeaderboard();
+    </script>
+  </body>
+</html>html>
+    </script></p></h4>
+  </body>
+    </style></title>
+  </head>
