@@ -5,121 +5,1170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a0f0a">
+  <meta name="description" content="Zamindar - India's running territory game. Claim land by running.">
+  <link rel="manifest" href="data:application/json,{}">
   <title>Zamindar - Territory Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; overflow: hidden; }
-    body { font-family: 'Tiro Devanagari Hindi', Georgia, serif; background: #1a0f0a; color: #f5e6d3; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-    #map { position: absolute; top: 0; left: 0; right: 0; bottom: 60px; z-index: 1; }
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(60px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); background: #1a0f0a; border-top: 2px solid #3d2b1f; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
-    .nav-btn { display: flex; flex-direction: column; align-items: center; background: none; border: none; color: #a08060; font-size: 0.7rem; font-family: inherit; cursor: pointer; padding: 8px 16px; min-width: 60px; }
-    .nav-btn .icon { font-size: 1.4rem; margin-bottom: 2px; }
+    body {
+      font-family: 'Tiro Devanagari Hindi', Georgia, serif;
+      background: #1a0f0a; color: #f5e6d3;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ── Splash Screen ── */
+    .splash {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #1a0f0a;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    .splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .splash h1 { font-size: 3rem; color: #ff6b00; margin-bottom: 0.25rem; }
+    .splash p { color: #a08060; font-size: 1rem; margin-bottom: 2rem; }
+    .splash-loader {
+      width: 40px; height: 40px;
+      border: 3px solid #3d2b1f; border-top-color: #ff6b00;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Map ── */
+    #map {
+      position: absolute; top: 0; left: 0; right: 0;
+      bottom: 60px; z-index: 1;
+    }
+
+    /* ── Toast Notification ── */
+    .toast-container {
+      position: fixed; top: calc(12px + env(safe-area-inset-top));
+      left: 50%; transform: translateX(-50%);
+      z-index: 2000; width: 90%; max-width: 360px;
+      pointer-events: none;
+    }
+    .toast {
+      background: #2d1f14; border: 1px solid #3d2b1f;
+      border-radius: 10px; padding: 10px 14px;
+      color: #f5e6d3; font-size: 0.85rem;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      transform: translateY(-80px); opacity: 0;
+      transition: all 0.35s cubic-bezier(.4,0,.2,1);
+      pointer-events: auto;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .toast.error { border-color: #cc3333; }
+    .toast.success { border-color: #2a9d8f; }
+
+    /* ── Map Action Buttons (right column) ── */
+    .map-actions {
+      position: absolute; top: 10px; right: 10px;
+      z-index: 1000; display: flex; flex-direction: column; gap: 6px;
+    }
+    .action-btn {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: rgba(26,15,10,0.92); backdrop-filter: blur(8px);
+      border: 1px solid #ff6b00; color: #ff6b00;
+      font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .action-btn:active { background: #ff6b00; color: #1a0f0a; transform: scale(0.93); }
+    .action-btn.tracking { border-color: #2a9d8f; color: #2a9d8f; animation: pulse-border 2s infinite; }
+    @keyframes pulse-border {
+      0%,100% { box-shadow: 0 0 0 0 rgba(42,157,143,0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(42,157,143,0); }
+    }
+
+    /* ── Status Pill (top-left) ── */
+    .status-pill {
+      position: absolute; top: 10px; left: 10px;
+      z-index: 1000; background: rgba(26,15,10,0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid #3d2b1f; border-radius: 20px;
+      padding: 6px 12px; font-size: 0.75rem;
+      color: #a08060; display: flex; align-items: center; gap: 6px;
+    }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #cc3333;
+    }
+    .status-dot.online { background: #2a9d8f; }
+    .status-dot.connected { background: #ff6b00; }
+
+    /* ── Bottom Navigation ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: calc(60px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: rgba(26,15,10,0.96); backdrop-filter: blur(10px);
+      border-top: 1px solid #3d2b1f;
+      display: flex; justify-content: space-around; align-items: center;
+      z-index: 1000;
+    }
+    .nav-btn {
+      display: flex; flex-direction: column; align-items: center;
+      background: none; border: none; color: #5a4030;
+      font-size: 0.65rem; font-family: inherit;
+      cursor: pointer; padding: 6px 12px; min-width: 56px;
+      transition: color 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn .icon { font-size: 1.3rem; margin-bottom: 2px; transition: transform 0.2s ease; }
     .nav-btn.active { color: #ff6b00; }
-    .map-actions { position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; }
-    .action-btn { width: 44px; height: 44px; border-radius: 8px; background: #1a0f0a; border: 1px solid #ff6b00; color: #ff6b00; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .action-btn:active { background: #ff6b00; color: #1a0f0a; }
-    .bottom-sheet { position: fixed; bottom: 60px; left: 0; right: 0; background: #1a0f0a; border-top: 2px solid #ff6b00; border-radius: 16px 16px 0 0; z-index: 999; transform: translateY(100%); transition: transform 0.3s ease; max-height: 60vh; overflow-y: auto; }
+    .nav-btn.active .icon { transform: scale(1.1); }
+    .nav-btn:active .icon { transform: scale(0.9); }
+
+    /* ── Bottom Sheet ── */
+    .sheet-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 1500;
+      opacity: 0; visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .sheet-backdrop.open { opacity: 1; visibility: visible; }
+    .bottom-sheet {
+      position: fixed; bottom: 60px; left: 0; right: 0;
+      background: #1a0f0a; border-top: 2px solid #ff6b00;
+      border-radius: 20px 20px 0 0; z-index: 1600;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+      max-height: 65vh; display: flex; flex-direction: column;
+    }
     .bottom-sheet.open { transform: translateY(0); }
-    .sheet-handle { width: 40px; height: 4px; background: #3d2b1f; border-radius: 2px; margin: 10px auto; }
-    .sheet-tabs { display: flex; border-bottom: 1px solid #3d2b1f; }
-    .sheet-tab { flex: 1; padding: 10px; text-align: center; background: none; border: none; color: #a08060; font-family: inherit; font-size: 0.9rem; cursor: pointer; }
-    .sheet-tab.active { color: #ff6b00; border-bottom: 2px solid #ff6b00; }
-    .sheet-content { padding: 1rem; }
-    .leaderboard-item { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid #2d1f14; }
-    .runner-name { color: #f5e6d3; font-size: 0.9rem; }
-    .runner-score { color: #ff6b00; font-weight: bold; }
-    .activity-item { padding: 0.5rem 0; font-size: 0.85rem; color: #a08060; border-bottom: 1px solid #2d1f14; }
-    .btn-strava { display: block; width: 100%; padding: 14px; background: #fc4c02; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; font-family: inherit; margin-top: 0.5rem; }
-    .fomo-card { position: fixed; bottom: 70px; left: 10px; right: 10px; background: linear-gradient(135deg, #2d1f14, #1a0f0a); border: 1px solid #ff6b00; border-radius: 12px; padding: 1rem; z-index: 998; display: none; }
+    .sheet-handle-area { padding: 10px 0 4px; text-align: center; cursor: grab; }
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: #3d2b1f; border-radius: 2px;
+      margin: 0 auto;
+    }
+    .sheet-tabs {
+      display: flex; border-bottom: 1px solid #2d1f14;
+      padding: 0 1rem; flex-shrink: 0;
+    }
+    .sheet-tab {
+      flex: 1; padding: 10px 4px; text-align: center;
+      background: none; border: none; border-bottom: 2px solid transparent;
+      color: #5a4030; font-family: inherit; font-size: 0.85rem;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .sheet-tab.active { color: #ff6b00; border-bottom-color: #ff6b00; }
+    .sheet-content {
+      padding: 0.75rem 1rem 1rem;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      flex: 1;
+    }
+
+    /* ── Leaderboard ── */
+    .leaderboard-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.65rem 0; border-bottom: 1px solid #2d1f14;
+    }
+    .leaderboard-item:last-child { border: none; }
+    .lb-rank {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #2d1f14; color: #ff6b00;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: bold; flex-shrink: 0;
+      margin-right: 10px;
+    }
+    .lb-rank.gold { background: #ff6b00; color: #1a0f0a; }
+    .lb-rank.silver { background: #a08060; color: #1a0f0a; }
+    .lb-rank.bronze { background: #6b4c30; color: #f5e6d3; }
+    .lb-info { flex: 1; min-width: 0; }
+    .runner-name { color: #f5e6d3; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .runner-city { color: #5a4030; font-size: 0.72rem; }
+    .runner-score { color: #ff6b00; font-weight: bold; font-size: 0.85rem; white-space: nowrap; }
+
+    /* ── Skeleton loading ── */
+    .skeleton {
+      background: linear-gradient(90deg, #2d1f14 25%, #3d2b1f 50%, #2d1f14 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton-row { display: flex; align-items: center; padding: 0.65rem 0; gap: 10px; }
+    .skeleton-circle { width: 24px; height: 24px; border-radius: 50%; }
+    .skeleton-line { height: 14px; flex: 1; border-radius: 4px; }
+    .skeleton-short { height: 14px; width: 50px; border-radius: 4px; }
+
+    /* ── Activity Feed ── */
+    .activity-item {
+      padding: 0.55rem 0; font-size: 0.82rem;
+      color: #a08060; border-bottom: 1px solid #2d1f14;
+      display: flex; align-items: flex-start; gap: 8px;
+    }
+    .activity-item:last-child { border: none; }
+    .activity-icon { font-size: 1rem; flex-shrink: 0; }
+    .activity-text { flex: 1; }
+    .activity-time { color: #5a4030; font-size: 0.7rem; flex-shrink: 0; }
+
+    /* ── FOMO Card ── */
+    .fomo-card {
+      position: fixed; bottom: 70px; left: 10px; right: 10px;
+      background: linear-gradient(135deg, #2d1f14, #1a0f0a);
+      border: 1px solid #ff6b00; border-radius: 14px;
+      padding: 1rem 1rem 0.75rem; z-index: 1400;
+      display: none; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      animation: slideUp 0.4s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .fomo-card h4 { color: #ff6b00; font-size: 0.95rem; }
     .fomo-card p { color: #a08060; font-size: 0.8rem; margin: 0.25rem 0; }
-    .fomo-close { position: absolute; top: 8px; right: 12px; background: none; border: none; color: #a08060; font-size: 1.3rem; cursor: pointer; padding: 4px; }
-    .fomo-dismiss { color: #5a4030; font-size: 0.75rem; background: none; border: none; margin-top: 0.5rem; cursor: pointer; }
-    .popup-content h4 { color: #ff6b00; }
-    .popup-content p { font-size: 0.9rem; margin: 3px 0; }
-    .popup-content .siege { color: #cc0000; font-weight: bold; }
-    .leaflet-popup-content-wrapper { border-radius: 10px; }
-    .leaflet-popup-close-button { width: 30px !important; height: 30px !important; font-size: 20px !important; }
-    .city-marker { background: #1a0f0a; border: 2px solid #ff6b00; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #ff6b00; }
-    .sheet-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 998; display: none; }
-    .sheet-backdrop.open { display: block; }
+    .fomo-close {
+      position: absolute; top: 8px; right: 12px;
+      background: none; border: none; color: #5a4030;
+      font-size: 1.4rem; cursor: pointer; padding: 4px;
+    }
+    .fomo-dismiss {
+      color: #5a4030; font-size: 0.72rem;
+      background: none; border: none; margin-top: 0.4rem; cursor: pointer;
+    }
+
+    /* ── Strava Connect Button ── */
+    .btn-strava {
+      display: block; width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #fc4c02, #e04400);
+      color: white; border: none; border-radius: 10px;
+      font-size: 1rem; cursor: pointer; font-family: inherit;
+      margin-top: 0.5rem; font-weight: bold;
+      box-shadow: 0 4px 15px rgba(252,76,2,0.3);
+      transition: transform 0.15s ease;
+    }
+    .btn-strava:active { transform: scale(0.97); }
+
+    /* ── Profile Screen ── */
+    .profile-screen {
+      position: fixed; inset: 0; bottom: 60px;
+      background: #1a0f0a; z-index: 1400;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+    }
+    .profile-screen.open { transform: translateX(0); }
+    .profile-header {
+      padding: 1.5rem 1rem 1rem;
+      background: linear-gradient(180deg, #2d1f14 0%, #1a0f0a 100%);
+      text-align: center; position: relative;
+    }
+    .profile-back {
+      position: absolute; top: 1rem; left: 1rem;
+      background: none; border: none; color: #ff6b00;
+      font-size: 1.5rem; cursor: pointer;
+    }
+    .profile-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      border: 3px solid #ff6b00; margin: 0 auto 0.5rem;
+      background: #2d1f14; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 2rem; color: #ff6b00; overflow: hidden;
+    }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-name { font-size: 1.3rem; color: #f5e6d3; }
+    .profile-subtitle { font-size: 0.8rem; color: #5a4030; }
+    .profile-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: #2d1f14; margin: 1rem 0;
+      border-radius: 12px; overflow: hidden;
+    }
+    .stat-card {
+      background: #1a0f0a; padding: 0.8rem 0.5rem; text-align: center;
+    }
+    .stat-value { font-size: 1.4rem; color: #ff6b00; font-weight: bold; }
+    .stat-label { font-size: 0.7rem; color: #5a4030; margin-top: 2px; }
+    .profile-section {
+      padding: 1rem; border-top: 1px solid #2d1f14;
+    }
+    .profile-section h3 { color: #ff8533; font-size: 0.95rem; margin-bottom: 0.6rem; }
+    .badge-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    }
+    .badge {
+      background: #2d1f14; border-radius: 10px; padding: 0.6rem 0.3rem;
+      text-align: center; font-size: 0.7rem; color: #5a4030;
+    }
+    .badge.earned { border: 1px solid #ff6b00; color: #ff6b00; }
+    .badge .badge-icon { font-size: 1.5rem; display: block; margin-bottom: 2px; }
+    .run-history-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0.6rem 0; border-bottom: 1px solid #2d1f14;
+    }
+    .run-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff6b00; flex-shrink: 0; }
+    .run-info { flex: 1; }
+    .run-title { color: #f5e6d3; font-size: 0.85rem; }
+    .run-meta { color: #5a4030; font-size: 0.72rem; }
+    .run-area { color: #ff6b00; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+    .profile-cta {
+      padding: 1.5rem 1rem;
+      text-align: center;
+    }
+
+    /* ── Tutorial Overlay ── */
+    .tutorial-overlay {
+      position: fixed; inset: 0; z-index: 3000;
+      background: rgba(0,0,0,0.85);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+    .tutorial-overlay.show { display: flex; }
+    .tutorial-card {
+      background: #1a0f0a; border: 1px solid #ff6b00;
+      border-radius: 16px; padding: 1.5rem;
+      text-align: center; max-width: 300px; width: 100%;
+    }
+    .tutorial-step { font-size: 0.75rem; color: #5a4030; margin-bottom: 0.5rem; }
+    .tutorial-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+    .tutorial-card h3 { color: #ff6b00; font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .tutorial-card p { color: #a08060; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1rem; }
+    .tutorial-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 1rem; }
+    .tutorial-dot { width: 8px; height: 8px; border-radius: 50%; background: #3d2b1f; }
+    .tutorial-dot.active { background: #ff6b00; }
+    .tutorial-btn {
+      padding: 10px 24px; border: none; border-radius: 8px;
+      background: #ff6b00; color: #1a0f0a; font-family: inherit;
+      font-size: 0.9rem; font-weight: bold; cursor: pointer;
+    }
+    .tutorial-skip {
+      background: none; border: none; color: #5a4030;
+      font-size: 0.75rem; cursor: pointer; margin-top: 0.75rem;
+    }
+
+    /* ── City/Territory Popups ── */
+    .leaflet-popup-content-wrapper {
+      background: #1a0f0a; color: #f5e6d3;
+      border: 1px solid #3d2b1f; border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+    }
+    .leaflet-popup-tip { background: #1a0f0a; }
+    .leaflet-popup-close-button {
+      color: #5a4030 !important; font-size: 20px !important;
+      width: 28px !important; height: 28px !important;
+    }
+    .popup-content h4 { color: #ff6b00; font-size: 0.95rem; margin-bottom: 4px; }
+    .popup-content p { font-size: 0.82rem; margin: 3px 0; color: #a08060; }
+    .popup-content .siege { color: #e63946; font-weight: bold; }
+    .popup-content .tag {
+      display: inline-block; background: #2d1f14;
+      border-radius: 4px; padding: 2px 6px;
+      font-size: 0.7rem; color: #ff6b00; margin-top: 4px;
+    }
+
+    /* ── City Markers ── */
+    .city-marker {
+      background: rgba(26,15,10,0.9); border: 2px solid #ff6b00;
+      border-radius: 50%; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #ff6b00; font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease;
+    }
+    .city-marker.captured { border-color: #2a9d8f; color: #2a9d8f; }
+    .city-marker.contested { border-color: #e63946; color: #e63946; animation: pulse-border 1.5s infinite; }
+
+    /* ── Offline Banner ── */
+    .offline-banner {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: #e63946; color: white;
+      text-align: center; font-size: 0.75rem;
+      padding: 4px; z-index: 5000;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+    .offline-banner.show { transform: translateY(0); }
+
+    /* ── Leaflet overrides ── */
+    .leaflet-control-zoom a {
+      background: rgba(26,15,10,0.92) !important;
+      color: #ff6b00 !important;
+      border-color: #3d2b1f !important;
+    }
+    .leaflet-control-attribution { display: none !important; }
   </style>
 </head>
 <body>
+
+  <!-- Splash Screen -->
+  <div class="splash" id="splash">
+    <h1>Zamindar</h1>
+    <p>India's Running Territory Game</p>
+    <div class="splash-loader"></div>
+  </div>
+
+  <!-- Offline Banner -->
+  <div class="offline-banner" id="offline-banner">You are offline. Data may be stale.</div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Map -->
   <div id="map"></div>
+
+  <!-- Status Pill -->
+  <div class="status-pill" id="status-pill">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Not connected</span>
+  </div>
+
+  <!-- Map Action Buttons -->
   <div class="map-actions">
-    <button class="action-btn" onclick="setView('india')" title="India view">IN</button>
-    <button class="action-btn" onclick="setView('my')" title="My location">MY</button>
-    <button class="action-btn" onclick="simulateRun()" title="Simulate run">SIM</button>
+    <button class="action-btn" id="btn-india" onclick="setView('india')" title="India view">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
+    </button>
+    <button class="action-btn" id="btn-locate" onclick="setView('my')" title="My location">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+    </button>
+    <button class="action-btn" id="btn-track" onclick="toggleTracking()" title="Track location">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+    </button>
+    <button class="action-btn" id="btn-sim" onclick="handleSimulate()" title="Simulate run">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </button>
   </div>
+
+  <!-- Bottom Navigation -->
   <div class="bottom-nav">
-    <button class="nav-btn active" onclick="setView('india')">
-      <span class="icon">&#128506;&#65039;</span> Map
+    <button class="nav-btn active" id="nav-map" onclick="switchScreen('map')">
+      <span class="icon">&#x1F5FA;&#xFE0F;</span>
+      <span>Map</span>
     </button>
-    <button class="nav-btn" onclick="window.location.href='/auth/strava'">
-      <span class="icon">&#127939;</span> Connect
+    <button class="nav-btn" id="nav-connect" onclick="handleConnect()">
+      <span class="icon">&#x1F3C3;</span>
+      <span id="connect-label">Connect</span>
     </button>
-    <button class="nav-btn" onclick="toggleSheet()">
-      <span class="icon">&#127942;</span> Zamindars
+    <button class="nav-btn" id="nav-rank" onclick="toggleSheet()">
+      <span class="icon">&#x1F3C6;</span>
+      <span>Zamindars</span>
+    </button>
+    <button class="nav-btn" id="nav-profile" onclick="switchScreen('profile')">
+      <span class="icon">&#x1F464;</span>
+      <span>Profile</span>
     </button>
   </div>
+
+  <!-- Bottom Sheet (Leaderboard/Activity) -->
   <div class="sheet-backdrop" id="sheet-backdrop" onclick="toggleSheet()"></div>
   <div class="bottom-sheet" id="bottom-sheet">
-    <div class="sheet-handle"></div>
+    <div class="sheet-handle-area" id="sheet-drag">
+      <div class="sheet-handle"></div>
+    </div>
     <div class="sheet-tabs">
-      <button class="sheet-tab active" onclick="switchTab('leaderboard')">Zamindars</button>
-      <button class="sheet-tab" onclick="switchTab('activity')">Hukumnama</button>
+      <button class="sheet-tab active" data-tab="leaderboard" onclick="switchTab('leaderboard')">Zamindars</button>
+      <button class="sheet-tab" data-tab="activity" onclick="switchTab('activity')">Hukumnama</button>
+      <button class="sheet-tab" data-tab="cities" onclick="switchTab('cities')">Cities</button>
     </div>
     <div class="sheet-content" id="sheet-leaderboard">
       <div id="leaderboard">
-        <div class="leaderboard-item"><span class="runner-name">Loading...</span></div>
+        <div class="skeleton-row"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-short"></div></div>
+        <div class="skeleton-row"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-short"></div></div>
+        <div class="skeleton-row"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-short"></div></div>
       </div>
     </div>
     <div class="sheet-content" id="sheet-activity" style="display:none;">
       <div id="activity-log">
-        <div class="activity-item">Waiting for activity...</div>
+        <div class="activity-item">
+          <span class="activity-icon">&#9203;</span>
+          <span class="activity-text">Waiting for activity...</span>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-content" id="sheet-cities" style="display:none;">
+      <div id="city-list">
+        <div class="skeleton-row"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-short"></div></div>
+        <div class="skeleton-row"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-short"></div></div>
       </div>
     </div>
   </div>
+
+  <!-- FOMO Card -->
   <div class="fomo-card" id="fomo-card">
     <button class="fomo-close" onclick="closeFomo()">&times;</button>
-    <h4>3 runners near you today</h4>
+    <h4>&#x1F525; 3 runners near you today</h4>
     <p>Connect Strava to defend your zameen before the 48hr siege expires.</p>
-    <button class="btn-strava" onclick="window.location.href='/auth/strava'">Connect Strava</button>
+    <button class="btn-strava" onclick="handleConnect()">Connect Strava</button>
     <button class="fomo-dismiss" onclick="closeFomo()">Maybe later</button>
   </div>
+
+  <!-- Profile Screen -->
+  <div class="profile-screen" id="profile-screen">
+    <div class="profile-header">
+      <button class="profile-back" onclick="switchScreen('map')">&larr;</button>
+      <div class="profile-avatar" id="profile-avatar">&#x1F3C3;</div>
+      <div class="profile-name" id="profile-name">Runner</div>
+      <div class="profile-subtitle" id="profile-subtitle">Connect Strava to see your stats</div>
+    </div>
+    <div class="profile-stats">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-distance">0</div>
+        <div class="stat-label">km run</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-territories">0</div>
+        <div class="stat-label">territories</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-rank">-</div>
+        <div class="stat-label">rank</div>
+      </div>
+    </div>
+    <div class="profile-section">
+      <h3>Badges</h3>
+      <div class="badge-grid">
+        <div class="badge" id="badge-first"><span class="badge-icon">&#x1F3C5;</span>First Run</div>
+        <div class="badge" id="badge-10k"><span class="badge-icon">&#x1F525;</span>10km Club</div>
+        <div class="badge" id="badge-city"><span class="badge-icon">&#x1F3D9;&#xFE0F;</span>City Zamindar</div>
+        <div class="badge" id="badge-siege"><span class="badge-icon">&#x2694;&#xFE0F;</span>Siege Winner</div>
+        <div class="badge" id="badge-5runs"><span class="badge-icon">&#x26A1;</span>5 Runs</div>
+        <div class="badge" id="badge-50k"><span class="badge-icon">&#x1F48E;</span>50km Club</div>
+        <div class="badge" id="badge-multi"><span class="badge-icon">&#x1F30D;</span>Multi-city</div>
+        <div class="badge" id="badge-streak"><span class="badge-icon">&#x1F4AA;</span>3-day Streak</div>
+      </div>
+    </div>
+    <div class="profile-section">
+      <h3>Recent Runs</h3>
+      <div id="run-history">
+        <div style="text-align:center; color:#5a4030; padding:1rem; font-size:0.85rem;">
+          Connect Strava to see your run history
+        </div>
+      </div>
+    </div>
+    <div class="profile-cta" id="profile-cta">
+      <button class="btn-strava" onclick="handleConnect()">Connect Strava to Start</button>
+    </div>
+  </div>
+
+  <!-- Tutorial Overlay -->
+  <div class="tutorial-overlay" id="tutorial-overlay">
+    <div class="tutorial-card">
+      <div class="tutorial-step" id="tutorial-step-label">Step 1 of 3</div>
+      <div class="tutorial-icon" id="tutorial-icon">&#x1F3C3;</div>
+      <h3 id="tutorial-title">Run to Claim</h3>
+      <p id="tutorial-desc">Every run you do on Strava creates a territory polygon on the map. The land enclosed by your route becomes yours.</p>
+      <div class="tutorial-dots">
+        <div class="tutorial-dot active" id="dot-0"></div>
+        <div class="tutorial-dot" id="dot-1"></div>
+        <div class="tutorial-dot" id="dot-2"></div>
+      </div>
+      <button class="tutorial-btn" id="tutorial-next" onclick="nextTutorialStep()">Next</button>
+      <br>
+      <button class="tutorial-skip" onclick="closeTutorial()">Skip tutorial</button>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    /* ═══════════════════════════════════════════
+       Zamindar Mobile - Complete Frontend
+       ═══════════════════════════════════════════ */
+
+    // ── Config ──
     var API_BASE = window.location.origin;
     var INDIA_CENTER = [22.5, 78.9];
     var INDIA_ZOOM = 5;
-    var map = L.map('map', { zoomControl: false, detectRetina: true }).setView(INDIA_CENTER, INDIA_ZOOM);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM &copy; CARTO', maxZoom: 19, detectRetina: true }).addTo(map);
+
+    // ── State ──
+    var currentScreen = 'map';
+    var sheetOpen = false;
+    var isTracking = false;
+    var watchId = null;
+    var userMarker = null;
+    var isAuthenticated = false;
+    var userProfile = null;
+    var tutorialStep = 0;
+    var activityLog = [];
+
+    // ── Tutorial Data ──
+    var tutorialSteps = [
+      { icon: '\u{1F3C3}', title: 'Run to Claim', desc: 'Every run you do on Strava creates a territory polygon on the map. The land enclosed by your route becomes yours.' },
+      { icon: '\u2694\uFE0F', title: 'Defend Your Zameen', desc: 'When another runner\'s territory overlaps yours, a 48-hour siege begins. Patrol your land to defend it!' },
+      { icon: '\u{1F3D9}\uFE0F', title: 'Capture Cities', desc: 'Run through 15 major Indian cities. The runner with the most territory in a city becomes its Zamindar.' }
+    ];
+
+    // ── Initialize Map ──
+    var map = L.map('map', {
+      zoomControl: false,
+      detectRetina: true,
+      attributionControl: false
+    }).setView(INDIA_CENTER, INDIA_ZOOM);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19, detectRetina: true
+    }).addTo(map);
+
     L.control.zoom({ position: 'topleft' }).addTo(map);
+
     var territoryLayer = L.layerGroup().addTo(map);
     var cityLayer = L.layerGroup().addTo(map);
+
     var COLORS = ['#ff6b00','#00b4d8','#e63946','#2a9d8f','#e9c46a','#f4a261','#264653','#9b5de5'];
-    function getRunnerColor(id) { return COLORS[Math.abs(hashCode(id)) % COLORS.length]; }
-    function hashCode(str) { var hash = 0; for (var i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; } return hash; }
-    async function loadTerritories() { try { var b = map.getBounds(); var res = await fetch(API_BASE + '/map/territories?bbox=' + b.getWest() + ',' + b.getSouth() + ',' + b.getEast() + ',' + b.getNorth()); if (!res.ok) return; var data = await res.json(); territoryLayer.clearLayers(); if (data.territories) { data.territories.forEach(function(t) { if (t.geojson) { var color = getRunnerColor(t.runner_id || 'default'); L.geoJSON(t.geojson, { style: { color: color, fillColor: color, fillOpacity: 0.3, weight: 2 } }).bindPopup('<div class="popup-content"><h4>' + (t.runner_name || 'Runner') + '</h4><p>' + (t.distance_m/1000).toFixed(1) + ' km</p>' + (t.contested ? '<p class="siege">Under Siege!</p>' : '') + '</div>').addTo(territoryLayer); } }); } } catch (e) { console.log('Load error:', e.message); } }
-    async function loadCities() { try { var res = await fetch(API_BASE + '/map/cities'); if (!res.ok) return; var data = await res.json(); cityLayer.clearLayers(); if (data.cities) { data.cities.forEach(function(c) { var icon = L.divIcon({ className: 'city-marker', html: c.name.charAt(0) }); L.marker([c.lat, c.lng], { icon: icon }).bindPopup('<div class="popup-content"><h4>' + c.name + '</h4><p>' + c.multiplier + 'x multiplier</p>' + (c.zamindar ? '<p>Zamindar: ' + c.zamindar + '</p>' : '<p>Unclaimed!</p>') + '</div>').addTo(cityLayer); }); } } catch (e) {} }
-    async function loadLeaderboard() { try { var res = await fetch(API_BASE + '/map/leaderboard'); if (!res.ok) return; var data = await res.json(); var el = document.getElementById('leaderboard'); if (data.leaderboard && data.leaderboard.length > 0) { el.innerHTML = data.leaderboard.map(function(r, i) { return '<div class="leaderboard-item"><span class="runner-name">' + (i+1) + '. ' + (r.name || r.strava_name) + '</span><span class="runner-score">' + (r.total_area/1000000).toFixed(2) + ' km2</span></div>'; }).join(''); } else { el.innerHTML = '<div class="leaderboard-item"><span class="runner-name">No runners yet!</span></div>'; } } catch (e) { document.getElementById('leaderboard').innerHTML = '<div class="leaderboard-item"><span class="runner-name">Connect Strava to start!</span></div>'; } }
-    function setView(view) { if (view === 'india') map.setView(INDIA_CENTER, INDIA_ZOOM); else if (view === 'my' && navigator.geolocation) { navigator.geolocation.getCurrentPosition(function(p) { map.setView([p.coords.latitude, p.coords.longitude], 13); }); } }
-    function simulateRun() { var c = map.getCenter(); var pts = []; for (var i = 0; i < 20; i++) { var a = (i/20) * Math.PI * 2; var r = 0.005 + Math.random() * 0.003; pts.push([c.lat + Math.sin(a)*r, c.lng + Math.cos(a)*r*1.3]); } pts.push(pts[0]); L.polygon(pts, { color:'#ff6b00', fillColor:'#ff6b00', fillOpacity:0.3, weight:2 }).addTo(territoryLayer).bindPopup('<div class="popup-content"><h4>Simulated Run</h4><p>Your territory would look like this!</p></div>').openPopup(); }
-    var sheetOpen = false;
-    function toggleSheet() { sheetOpen = !sheetOpen; document.getElementById('bottom-sheet').classList.toggle('open', sheetOpen); document.getElementById('sheet-backdrop').classList.toggle('open', sheetOpen); }
-    function switchTab(tab) { document.querySelectorAll('.sheet-tab').forEach(function(t) { t.classList.remove('active'); }); document.getElementById('sheet-leaderboard').style.display = tab === 'leaderboard' ? 'block' : 'none'; document.getElementById('sheet-activity').style.display = tab === 'activity' ? 'block' : 'none'; event.target.classList.add('active'); }
-    function closeFomo() { document.getElementById('fomo-card').style.display = 'none'; }
-    setTimeout(function() { document.getElementById('fomo-card').style.display = 'block'; }, 4000);
-    var startY = 0;
-    document.getElementById('bottom-sheet').addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
-    document.getElementById('bottom-sheet').addEventListener('touchmove', function(e) { var dy = e.touches[0].clientY - startY; if (dy > 80) { toggleSheet(); startY = 0; } });
-    map.on('moveend', loadTerritories);
-    loadTerritories();
-    loadCities();
-    loadLeaderboard();
+
+    function hashCode(str) {
+      var hash = 0;
+      for (var i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return hash;
+    }
+    function getRunnerColor(id) {
+      return COLORS[Math.abs(hashCode(id)) % COLORS.length];
+    }
+
+    // ── Toast System ──
+    function showToast(message, type, duration) {
+      type = type || 'info';
+      duration = duration || 3000;
+      var container = document.getElementById('toast-container');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      var icons = { info: '\u2139\uFE0F', error: '\u26A0\uFE0F', success: '\u2705' };
+      toast.innerHTML = '<span class="toast-icon">' + (icons[type] || icons.info) + '</span><span>' + message + '</span>';
+      container.appendChild(toast);
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { toast.classList.add('show'); });
+      });
+      setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { toast.remove(); }, 350);
+      }, duration);
+    }
+
+    // ── Auth Check ──
+    async function checkAuth() {
+      try {
+        var res = await fetch(API_BASE + '/auth/me', { credentials: 'include' });
+        if (res.ok) {
+          var data = await res.json();
+          if (data && data.user) {
+            isAuthenticated = true;
+            userProfile = data.user;
+            updateAuthUI();
+            return;
+          }
+        }
+      } catch(e) {}
+      isAuthenticated = false;
+      updateAuthUI();
+    }
+
+    function updateAuthUI() {
+      var dot = document.getElementById('status-dot');
+      var text = document.getElementById('status-text');
+      var label = document.getElementById('connect-label');
+      var cta = document.getElementById('profile-cta');
+
+      if (isAuthenticated && userProfile) {
+        dot.className = 'status-dot connected';
+        text.textContent = userProfile.display_name || 'Connected';
+        label.textContent = 'Strava';
+
+        // Update profile
+        document.getElementById('profile-name').textContent = userProfile.display_name || 'Runner';
+        document.getElementById('profile-subtitle').textContent = 'Strava Connected';
+        if (userProfile.avatar_url) {
+          document.getElementById('profile-avatar').innerHTML = '<img src="' + userProfile.avatar_url + '" alt="avatar">';
+        }
+        document.getElementById('stat-distance').textContent = (userProfile.total_distance_km || 0).toFixed(1);
+        document.getElementById('stat-territories').textContent = userProfile.zones_owned || 0;
+        cta.style.display = 'none';
+      } else {
+        dot.className = 'status-dot';
+        text.textContent = 'Not connected';
+        label.textContent = 'Connect';
+        cta.style.display = 'block';
+      }
+    }
+
+    // ── Data Loading ──
+    async function loadTerritories() {
+      try {
+        var b = map.getBounds();
+        var res = await fetch(API_BASE + '/map/territories?bbox=' +
+          b.getWest() + ',' + b.getSouth() + ',' + b.getEast() + ',' + b.getNorth());
+        if (!res.ok) return;
+        var data = await res.json();
+        territoryLayer.clearLayers();
+        if (data.territories && data.territories.length > 0) {
+          data.territories.forEach(function(t) {
+            if (t.geojson) {
+              var color = getRunnerColor(t.runner_id || 'default');
+              var layer = L.geoJSON(t.geojson, {
+                style: {
+                  color: color, fillColor: color,
+                  fillOpacity: 0.25, weight: 2, dashArray: t.contested ? '5,5' : null
+                }
+              });
+              var siegeHtml = '';
+              if (t.contested && t.siege_expires) {
+                var remaining = Math.max(0, new Date(t.siege_expires) - Date.now());
+                var hrs = Math.floor(remaining / 3600000);
+                var mins = Math.floor((remaining % 3600000) / 60000);
+                siegeHtml = '<p class="siege">\u2694\uFE0F Under Siege! ' + hrs + 'h ' + mins + 'm left</p>';
+              }
+              layer.bindPopup(
+                '<div class="popup-content">' +
+                '<h4>' + (t.runner_name || 'Runner') + '</h4>' +
+                '<p>' + (t.distance_m/1000).toFixed(1) + ' km run</p>' +
+                siegeHtml +
+                '<span class="tag">' + ((t.area_m2 || 0) / 1000000).toFixed(3) + ' km\u00B2</span>' +
+                '</div>'
+              );
+              layer.addTo(territoryLayer);
+            }
+          });
+        }
+      } catch (e) {
+        console.log('Territory load error:', e.message);
+      }
+    }
+
+    async function loadCities() {
+      try {
+        var res = await fetch(API_BASE + '/map/cities');
+        if (!res.ok) return;
+        var data = await res.json();
+        cityLayer.clearLayers();
+        if (data.cities && data.cities.length > 0) {
+          data.cities.forEach(function(c) {
+            var markerClass = 'city-marker';
+            if (c.zamindar) markerClass += ' captured';
+            if (c.contested) markerClass += ' contested';
+            var icon = L.divIcon({
+              className: markerClass,
+              html: c.name.charAt(0),
+              iconSize: [32, 32]
+            });
+            L.marker([c.lat, c.lng], { icon: icon })
+              .bindPopup(
+                '<div class="popup-content">' +
+                '<h4>' + c.name + '</h4>' +
+                '<p>' + (c.state || '') + '</p>' +
+                '<p>' + c.multiplier + 'x multiplier \u2022 ' + (c.capture_radius_km || c.capture_radius_m/1000 || 15) + 'km radius</p>' +
+                (c.zamindar ? '<p style="color:#2a9d8f">\u{1F451} Zamindar: ' + c.zamindar + '</p>' : '<p style="color:#ff6b00">Unclaimed!</p>') +
+                '</div>'
+              ).addTo(cityLayer);
+          });
+          updateCityList(data.cities);
+        }
+      } catch (e) {
+        console.log('Cities load error:', e.message);
+      }
+    }
+
+    function updateCityList(cities) {
+      var el = document.getElementById('city-list');
+      if (!cities || cities.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#5a4030;padding:1rem;font-size:0.85rem;">No cities loaded</div>';
+        return;
+      }
+      el.innerHTML = cities.map(function(c) {
+        return '<div class="leaderboard-item" onclick="map.setView([' + c.lat + ',' + c.lng + '],12);toggleSheet();">' +
+          '<div class="lb-rank" style="font-size:1rem">' + c.name.charAt(0) + '</div>' +
+          '<div class="lb-info"><div class="runner-name">' + c.name + '</div>' +
+          '<div class="runner-city">' + c.multiplier + 'x \u2022 ' + (c.zamindar || 'Unclaimed') + '</div></div>' +
+          '<div class="runner-score" style="font-size:0.75rem">' + (c.state || '') + '</div></div>';
+      }).join('');
+    }
+
+    async function loadLeaderboard() {
+      try {
+        var res = await fetch(API_BASE + '/map/leaderboard');
+        if (!res.ok) throw new Error('Failed');
+        var data = await res.json();
+        var el = document.getElementById('leaderboard');
+        if (data.leaderboard && data.leaderboard.length > 0) {
+          el.innerHTML = data.leaderboard.map(function(r, i) {
+            var rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            return '<div class="leaderboard-item">' +
+              '<div class="lb-rank ' + rankClass + '">' + (i+1) + '</div>' +
+              '<div class="lb-info"><div class="runner-name">' + (r.name || r.strava_name || r.display_name || 'Runner') + '</div>' +
+              '<div class="runner-city">' + (r.city || '') + '</div></div>' +
+              '<div class="runner-score">' + ((r.total_area || 0)/1000000).toFixed(2) + ' km\u00B2</div></div>';
+          }).join('');
+          // Update profile rank
+          if (isAuthenticated && userProfile) {
+            var idx = data.leaderboard.findIndex(function(r) { return r.strava_id === userProfile.strava_id; });
+            if (idx >= 0) document.getElementById('stat-rank').textContent = '#' + (idx + 1);
+          }
+        } else {
+          el.innerHTML = '<div style="text-align:center;padding:1.5rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">\u{1F3C6}</div>' +
+            '<div style="color:#a08060;font-size:0.9rem;">No runners yet</div>' +
+            '<div style="color:#5a4030;font-size:0.8rem;margin-top:0.25rem;">Be the first Zamindar!</div></div>';
+        }
+      } catch (e) {
+        var el = document.getElementById('leaderboard');
+        el.innerHTML = '<div style="text-align:center;padding:1.5rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">\u{1F3C3}</div>' +
+          '<div style="color:#a08060;font-size:0.9rem;">Connect Strava to start</div>' +
+          '<div style="color:#5a4030;font-size:0.8rem;margin-top:0.25rem;">Your runs will appear here</div></div>';
+      }
+    }
+
+    // ── Navigation ──
+    function switchScreen(screen) {
+      currentScreen = screen;
+      // Reset active states
+      document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+
+      if (screen === 'map') {
+        document.getElementById('profile-screen').classList.remove('open');
+        document.getElementById('nav-map').classList.add('active');
+        map.invalidateSize();
+      } else if (screen === 'profile') {
+        document.getElementById('profile-screen').classList.add('open');
+        document.getElementById('nav-profile').classList.add('active');
+      }
+    }
+
+    function handleConnect() {
+      if (isAuthenticated) {
+        showToast('Already connected to Strava', 'success');
+        switchScreen('profile');
+      } else {
+        window.location.href = '/auth/strava';
+      }
+    }
+
+    // ── Map Views ──
+    function setView(view) {
+      if (view === 'india') {
+        map.setView(INDIA_CENTER, INDIA_ZOOM);
+        showToast('India view', 'info', 1500);
+      } else if (view === 'my') {
+        if (!navigator.geolocation) {
+          showToast('Geolocation not supported', 'error');
+          return;
+        }
+        showToast('Finding your location...', 'info', 2000);
+        navigator.geolocation.getCurrentPosition(
+          function(p) {
+            map.setView([p.coords.latitude, p.coords.longitude], 14);
+            showUserMarker(p.coords.latitude, p.coords.longitude);
+          },
+          function() { showToast('Could not get location', 'error'); },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      }
+    }
+
+    function showUserMarker(lat, lng) {
+      if (userMarker) map.removeLayer(userMarker);
+      var icon = L.divIcon({
+        className: '',
+        html: '<div style="width:16px;height:16px;background:#ff6b00;border:3px solid #f5e6d3;border-radius:50%;box-shadow:0 0 10px rgba(255,107,0,0.6);"></div>',
+        iconSize: [16, 16], iconAnchor: [8, 8]
+      });
+      userMarker = L.marker([lat, lng], { icon: icon }).addTo(map);
+    }
+
+    // ── Location Tracking ──
+    function toggleTracking() {
+      var btn = document.getElementById('btn-track');
+      if (isTracking) {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        isTracking = false;
+        btn.classList.remove('tracking');
+        showToast('Tracking stopped', 'info', 1500);
+      } else {
+        if (!navigator.geolocation) {
+          showToast('Geolocation not supported', 'error');
+          return;
+        }
+        isTracking = true;
+        btn.classList.add('tracking');
+        showToast('Tracking your location', 'success', 2000);
+        watchId = navigator.geolocation.watchPosition(
+          function(p) {
+            showUserMarker(p.coords.latitude, p.coords.longitude);
+            map.setView([p.coords.latitude, p.coords.longitude], Math.max(map.getZoom(), 14));
+          },
+          function() { showToast('Location error', 'error'); },
+          { enableHighAccuracy: true, maximumAge: 5000 }
+        );
+      }
+    }
+
+    // ── Simulate Run ──
+    function handleSimulate() {
+      if (!localStorage.getItem('zamindar_tutorial_done')) {
+        showTutorial();
+        return;
+      }
+      simulateRun();
+    }
+
+    function simulateRun() {
+      var c = map.getCenter();
+      var zoom = map.getZoom();
+      if (zoom < 10) {
+        showToast('Zoom in closer to simulate a run', 'info');
+        return;
+      }
+      var pts = [];
+      var numPts = 25 + Math.floor(Math.random() * 15);
+      for (var i = 0; i < numPts; i++) {
+        var a = (i / numPts) * Math.PI * 2;
+        var r = 0.004 + Math.random() * 0.004;
+        var wobble = 1 + (Math.random() - 0.5) * 0.4;
+        pts.push([
+          c.lat + Math.sin(a) * r * wobble,
+          c.lng + Math.cos(a) * r * 1.3 * wobble
+        ]);
+      }
+      pts.push(pts[0]);
+
+      var polygon = L.polygon(pts, {
+        color: '#ff6b00', fillColor: '#ff6b00',
+        fillOpacity: 0.2, weight: 2
+      }).addTo(territoryLayer);
+
+      // Animate drawing
+      polygon.setStyle({ opacity: 0, fillOpacity: 0 });
+      var step = 0;
+      var anim = setInterval(function() {
+        step++;
+        var progress = Math.min(step / 20, 1);
+        polygon.setStyle({ opacity: progress, fillOpacity: progress * 0.2 });
+        if (progress >= 1) {
+          clearInterval(anim);
+          polygon.bindPopup(
+            '<div class="popup-content">' +
+            '<h4>\u{1F3C3} Simulated Run</h4>' +
+            '<p>This is what your territory would look like!</p>' +
+            '<p style="margin-top:6px;"><span class="tag">~' + (Math.random() * 3 + 2).toFixed(1) + ' km</span></p>' +
+            '</div>'
+          ).openPopup();
+        }
+      }, 40);
+
+      addActivity('\u{1F3C3}', 'You simulated a territory claim!');
+      showToast('Territory simulated!', 'success', 2000);
+    }
+
+    // ── Activity Log ──
+    function addActivity(icon, text) {
+      var now = new Date();
+      var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+      activityLog.unshift({ icon: icon, text: text, time: timeStr });
+      if (activityLog.length > 50) activityLog.pop();
+      renderActivity();
+    }
+
+    function renderActivity() {
+      var el = document.getElementById('activity-log');
+      if (activityLog.length === 0) {
+        el.innerHTML = '<div class="activity-item"><span class="activity-icon">\u23F3</span><span class="activity-text">Waiting for activity...</span></div>';
+        return;
+      }
+      el.innerHTML = activityLog.map(function(a) {
+        return '<div class="activity-item"><span class="activity-icon">' + a.icon + '</span>' +
+          '<span class="activity-text">' + a.text + '</span>' +
+          '<span class="activity-time">' + a.time + '</span></div>';
+      }).join('');
+    }
+
+    // ── Bottom Sheet ──
+    function toggleSheet() {
+      sheetOpen = !sheetOpen;
+      document.getElementById('bottom-sheet').classList.toggle('open', sheetOpen);
+      document.getElementById('sheet-backdrop').classList.toggle('open', sheetOpen);
+      if (sheetOpen) {
+        document.getElementById('nav-rank').classList.add('active');
+        if (currentScreen === 'map') document.getElementById('nav-map').classList.remove('active');
+      } else {
+        document.getElementById('nav-rank').classList.remove('active');
+        if (currentScreen === 'map') document.getElementById('nav-map').classList.add('active');
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.sheet-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
+      document.getElementById('sheet-leaderboard').style.display = tab === 'leaderboard' ? 'block' : 'none';
+      document.getElementById('sheet-activity').style.display = tab === 'activity' ? 'block' : 'none';
+      document.getElementById('sheet-cities').style.display = tab === 'cities' ? 'block' : 'none';
+    }
+
+    // ── Tutorial ──
+    function showTutorial() {
+      tutorialStep = 0;
+      renderTutorialStep();
+      document.getElementById('tutorial-overlay').classList.add('show');
+    }
+
+    function renderTutorialStep() {
+      var s = tutorialSteps[tutorialStep];
+      document.getElementById('tutorial-step-label').textContent = 'Step ' + (tutorialStep + 1) + ' of ' + tutorialSteps.length;
+      document.getElementById('tutorial-icon').textContent = s.icon;
+      document.getElementById('tutorial-title').textContent = s.title;
+      document.getElementById('tutorial-desc').textContent = s.desc;
+      for (var i = 0; i < tutorialSteps.length; i++) {
+        document.getElementById('dot-' + i).className = 'tutorial-dot' + (i === tutorialStep ? ' active' : '');
+      }
+      document.getElementById('tutorial-next').textContent = tutorialStep === tutorialSteps.length - 1 ? 'Got it!' : 'Next';
+    }
+
+    function nextTutorialStep() {
+      if (tutorialStep < tutorialSteps.length - 1) {
+        tutorialStep++;
+        renderTutorialStep();
+      } else {
+        closeTutorial();
+        simulateRun();
+      }
+    }
+
+    function closeTutorial() {
+      document.getElementById('tutorial-overlay').classList.remove('show');
+      localStorage.setItem('zamindar_tutorial_done', '1');
+    }
+
+    // ── FOMO Card ──
+    function closeFomo() {
+      var card = document.getElementById('fomo-card');
+      card.style.transform = 'translateY(30px)';
+      card.style.opacity = '0';
+      setTimeout(function() { card.style.display = 'none'; }, 300);
+    }
+
+    // ── Offline Detection ──
+    function updateOnlineStatus() {
+      var banner = document.getElementById('offline-banner');
+      var dot = document.getElementById('status-dot');
+      if (!navigator.onLine) {
+        banner.classList.add('show');
+        if (!isAuthenticated) dot.className = 'status-dot';
+      } else {
+        banner.classList.remove('show');
+        if (!isAuthenticated) dot.className = 'status-dot online';
+      }
+    }
+    window.addEventListener('online', function() {
+      updateOnlineStatus();
+      showToast('Back online', 'success', 2000);
+      loadTerritories(); loadCities(); loadLeaderboard();
+    });
+    window.addEventListener('offline', function() {
+      updateOnlineStatus();
+      showToast('You are offline', 'error', 3000);
+    });
+
+    // ── Touch Gestures on Bottom Sheet ──
+    (function() {
+      var sheet = document.getElementById('bottom-sheet');
+      var dragArea = document.getElementById('sheet-drag');
+      var startY = 0, currentY = 0, isDragging = false;
+
+      dragArea.addEventListener('touchstart', function(e) {
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        sheet.style.transition = 'none';
+      });
+
+      dragArea.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        currentY = e.touches[0].clientY;
+        var dy = currentY - startY;
+        if (dy > 0) {
+          sheet.style.transform = 'translateY(' + dy + 'px)';
+        }
+      });
+
+      dragArea.addEventListener('touchend', function() {
+        if (!isDragging) return;
+        isDragging = false;
+        sheet.style.transition = '';
+        var dy = currentY - startY;
+        if (dy > 60) {
+          toggleSheet();
+        } else {
+          sheet.style.transform = '';
+          if (sheetOpen) sheet.classList.add('open');
+        }
+        startY = 0; currentY = 0;
+      });
+    })();
+
+    // ── Pull to Refresh (on leaderboard) ──
+    (function() {
+      var sheetContent = document.getElementById('sheet-leaderboard');
+      var startY = 0;
+      sheetContent.addEventListener('touchstart', function(e) {
+        if (sheetContent.scrollTop === 0) startY = e.touches[0].clientY;
+      });
+      sheetContent.addEventListener('touchend', function(e) {
+        if (startY > 0) {
+          var dy = e.changedTouches[0].clientY - startY;
+          if (dy > 80) {
+            showToast('Refreshing...', 'info', 1500);
+            loadLeaderboard();
+            loadCities();
+          }
+          startY = 0;
+        }
+      });
+    })();
+
+    // ── Splash Screen ──
+    function hideSplash() {
+      document.getElementById('splash').classList.add('hidden');
+      // Show tutorial on first visit
+      if (!localStorage.getItem('zamindar_tutorial_done') && !localStorage.getItem('zamindar_visited')) {
+        localStorage.setItem('zamindar_visited', '1');
+        setTimeout(showTutorial, 800);
+      }
+    }
+
+    // ── FOMO Timer ──
+    function maybeShowFomo() {
+      if (isAuthenticated) return;
+      if (sessionStorage.getItem('fomo_dismissed')) return;
+      document.getElementById('fomo-card').style.display = 'block';
+    }
+
+    function closeFomo() {
+      var card = document.getElementById('fomo-card');
+      card.style.transform = 'translateY(30px)';
+      card.style.opacity = '0';
+      setTimeout(function() { card.style.display = 'none'; }, 300);
+      sessionStorage.setItem('fomo_dismissed', '1');
+    }
+
+    // ── Initialize Everything ──
+    async function init() {
+      updateOnlineStatus();
+
+      // Start data loads in parallel
+      var loads = [loadTerritories(), loadCities(), loadLeaderboard(), checkAuth()];
+      await Promise.allSettled(loads);
+
+      // Hide splash
+      setTimeout(hideSplash, 600);
+
+      // FOMO after delay
+      setTimeout(maybeShowFomo, 5000);
+
+      // Map events
+      map.on('moveend', loadTerritories);
+
+      // Refresh data periodically
+      setInterval(function() {
+        loadTerritories();
+        loadLeaderboard();
+      }, 60000);
+
+      addActivity('\u{1F30D}', 'Map loaded');
+    }
+
+    init();
   </script>
 </body>
 </html>
