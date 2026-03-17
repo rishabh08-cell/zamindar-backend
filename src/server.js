@@ -4,6 +4,7 @@ const cors = require('cors');
 const webhookRoutes = require('./routes/webhook');
 const mapRoutes = require('./routes/map');
 const authRoutes = require('./routes/auth');
+const zonesRoutes = require('./routes/zones');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +19,7 @@ app.get('/health', (req, res) => {
   app.use('/webhook', webhookRoutes);
   app.use('/map', mapRoutes);
   app.use('/auth', authRoutes);
+app.use('/zones', zonesRoutes);
   app.use(express.static('public'));
 
   app.listen(PORT, () => {
