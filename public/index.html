@@ -22,12 +22,59 @@
     h1 { font-size: 4rem; color: #ff6b00; margin-bottom: 0.5rem; text-shadow: 0 2px 10px rgba(255, 107, 0, 0.3); }
     .subtitle { font-size: 1.5rem; color: #d4a574; margin-bottom: 2rem; }
     .tagline { font-size: 1.1rem; line-height: 1.8; color: #c4a882; margin-bottom: 3rem; }
-    .cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-    .btn { display: inline-block; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-size: 1.1rem; font-weight: bold; transition: all 0.3s ease; cursor: pointer; border: none; }
-    .btn-primary { background: linear-gradient(135deg, #ff6b00, #ff8533); color: white; box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4); }
+
+    /* Auth Section */
+    .auth-section { margin-bottom: 3rem; width: 100%; max-width: 440px; margin-left: auto; margin-right: auto; }
+    .auth-tabs { display: flex; justify-content: center; gap: 0; margin-bottom: 1.5rem; }
+    .auth-tab {
+      padding: 0.7rem 2rem; cursor: pointer; border: 2px solid #ff6b00;
+      background: transparent; color: #ff6b00; font-size: 1rem; font-weight: bold;
+      font-family: 'Tiro Devanagari Hindi', Georgia, serif; transition: all 0.3s ease;
+    }
+    .auth-tab:first-child { border-radius: 8px 0 0 8px; border-right: none; }
+    .auth-tab:last-child { border-radius: 0 8px 8px 0; }
+    .auth-tab.active { background: linear-gradient(135deg, #ff6b00, #ff8533); color: white; }
+    .auth-tab:hover:not(.active) { background: rgba(255, 107, 0, 0.1); }
+
+    .auth-form { display: none; flex-direction: column; gap: 1rem; }
+    .auth-form.active { display: flex; }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; text-align: left; }
+    .form-group label { color: #d4a574; font-size: 0.9rem; }
+    .form-group input {
+      padding: 0.8rem 1rem; border-radius: 8px; border: 2px solid #3a2a1a;
+      background: #2a1a10; color: #f5e6d3; font-size: 1rem;
+      font-family: 'Tiro Devanagari Hindi', Georgia, serif;
+      transition: border-color 0.3s ease; outline: none;
+    }
+    .form-group input:focus { border-color: #ff6b00; }
+    .form-group input::placeholder { color: #6a5040; }
+
+    .divider { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0; }
+    .divider-line { flex: 1; height: 1px; background: #3a2a1a; }
+    .divider-text { color: #6a5040; font-size: 0.85rem; }
+
+    .btn { display: inline-block; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-size: 1.1rem; font-weight: bold; transition: all 0.3s ease; cursor: pointer; border: none; font-family: 'Tiro Devanagari Hindi', Georgia, serif; }
+    .btn-primary { background: linear-gradient(135deg, #ff6b00, #ff8533); color: white; box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4); width: 100%; }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 107, 0, 0.6); }
-    .btn-secondary { background: transparent; color: #ff6b00; border: 2px solid #ff6b00; }
-    .btn-secondary:hover { background: rgba(255, 107, 0, 0.1); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-strava {
+      background: #fc4c02; color: white; width: 100%; display: flex;
+      align-items: center; justify-content: center; gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(252, 76, 2, 0.3); text-decoration: none;
+    }
+    .btn-strava:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(252, 76, 2, 0.5); }
+    .btn-strava svg { width: 20px; height: 20px; fill: white; }
+    .btn-outline { background: transparent; color: #ff6b00; border: 2px solid #ff6b00; width: 100%; }
+    .btn-outline:hover { background: rgba(255, 107, 0, 0.1); }
+
+    .auth-error { color: #ff4444; font-size: 0.9rem; text-align: center; display: none; padding: 0.5rem; background: rgba(255, 68, 68, 0.1); border-radius: 8px; }
+    .auth-error.show { display: block; }
+    .auth-success { color: #44ff44; font-size: 0.9rem; text-align: center; display: none; padding: 0.5rem; background: rgba(68, 255, 68, 0.1); border-radius: 8px; }
+    .auth-success.show { display: block; }
+
+    .cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+
     .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-top: 4rem; padding: 0 1rem; }
     .feature { text-align: center; padding: 1.5rem; }
     .feature-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
@@ -38,7 +85,20 @@
     .stat-number { font-size: 2rem; color: #ff6b00; font-weight: bold; }
     .stat-label { color: #a08060; font-size: 0.85rem; }
     .footer { margin-top: 4rem; padding: 2rem; color: #5a4030; font-size: 0.85rem; }
-    @media (max-width: 600px) { h1 { font-size: 2.5rem; } .subtitle { font-size: 1.2rem; } }
+
+    /* Logged-in state */
+    .logged-in-bar { display: none; text-align: center; margin-bottom: 2rem; }
+    .logged-in-bar.show { display: block; }
+    .logged-in-bar .welcome { color: #d4a574; font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .logged-in-bar .user-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-small { padding: 0.5rem 1.5rem; font-size: 0.9rem; border-radius: 6px; }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 2.5rem; }
+      .subtitle { font-size: 1.2rem; }
+      .auth-section { max-width: 100%; }
+      .auth-tab { padding: 0.5rem 1.2rem; font-size: 0.9rem; }
+    }
   </style>
 </head>
 <body>
@@ -49,10 +109,83 @@
       Run through your city. Claim territory on a live map. Defend your zameen by patrolling it.
       Every kilometer you run becomes land you own. Every rival who crosses your path starts a siege.
     </p>
-    <div class="cta-buttons">
-      <a href="/zamindar.html" class="btn btn-primary">View the Map</a>
-      <a href="/auth/strava" class="btn btn-secondary">Connect Strava</a>
+
+    <!-- Logged-in state -->
+    <div class="logged-in-bar" id="loggedInBar">
+      <p class="welcome">Welcome back, <strong id="userName"></strong>!</p>
+      <div class="user-actions">
+        <a href="/zamindar.html" class="btn btn-primary btn-small">View the Map</a>
+        <button class="btn btn-outline btn-small" onclick="logout()">Log Out</button>
+      </div>
     </div>
+
+    <!-- Auth section (hidden when logged in) -->
+    <div class="auth-section" id="authSection">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('signup')">Sign Up</button>
+        <button class="auth-tab" onclick="switchTab('login')">Log In</button>
+      </div>
+
+      <div id="authError" class="auth-error"></div>
+      <div id="authSuccess" class="auth-success"></div>
+
+      <!-- SIGN UP FORM -->
+      <div class="auth-form active" id="signupForm">
+        <div class="form-group">
+          <label for="signupName">Display Name</label>
+          <input type="text" id="signupName" placeholder="Your runner name">
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" placeholder="Min 8 characters">
+        </div>
+        <button class="btn btn-primary" id="signupBtn" onclick="handleSignup()">Create Account</button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">or</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <a href="/auth/strava" class="btn btn-strava">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+          Sign up with Strava
+        </a>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div class="auth-form" id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Your password">
+        </div>
+        <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()">Log In</button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">or</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <a href="/auth/strava" class="btn btn-strava">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+          Log in with Strava
+        </a>
+      </div>
+
+      <div class="cta-buttons">
+        <a href="/zamindar.html" class="btn btn-outline">View the Map (Guest)</a>
+      </div>
+    </div>
+
     <div class="features">
       <div class="feature">
         <div class="feature-icon">&#127939;</div>
@@ -89,6 +222,152 @@
     Built with Strava API, Leaflet, Supabase + PostGIS
   </div>
   <script>
+    // Check if user is already logged in
+    const token = localStorage.getItem('zamindar_token');
+    const userName = localStorage.getItem('zamindar_name');
+    if (token) {
+      document.getElementById('authSection').style.display = 'none';
+      document.getElementById('loggedInBar').classList.add('show');
+      document.getElementById('userName').textContent = userName || 'Runner';
+    }
+
+    // Check for auth params from Strava callback
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('token')) {
+      localStorage.setItem('zamindar_token', params.get('token'));
+      if (params.get('name')) localStorage.setItem('zamindar_name', params.get('name'));
+      if (params.get('user')) localStorage.setItem('zamindar_user', params.get('user'));
+      window.location.href = '/zamindar.html';
+    }
+    if (params.get('auth') === 'denied') {
+      showError('Strava authorization was denied.');
+    } else if (params.get('auth') === 'error') {
+      showError('Authentication failed. Please try again.');
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+      hideMessages();
+      if (tab === 'signup') {
+        document.querySelectorAll('.auth-tab')[0].classList.add('active');
+        document.getElementById('signupForm').classList.add('active');
+      } else {
+        document.querySelectorAll('.auth-tab')[1].classList.add('active');
+        document.getElementById('loginForm').classList.add('active');
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('authError');
+      el.textContent = msg;
+      el.classList.add('show');
+      document.getElementById('authSuccess').classList.remove('show');
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('authSuccess');
+      el.textContent = msg;
+      el.classList.add('show');
+      document.getElementById('authError').classList.remove('show');
+    }
+
+    function hideMessages() {
+      document.getElementById('authError').classList.remove('show');
+      document.getElementById('authSuccess').classList.remove('show');
+    }
+
+    async function handleSignup() {
+      hideMessages();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const displayName = document.getElementById('signupName').value.trim();
+
+      if (!email || !password) { showError('Email and password are required.'); return; }
+      if (password.length < 8) { showError('Password must be at least 8 characters.'); return; }
+
+      const btn = document.getElementById('signupBtn');
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      try {
+        const res = await fetch('/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, displayName }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Signup failed'); return; }
+
+        localStorage.setItem('zamindar_token', data.token);
+        localStorage.setItem('zamindar_user', data.user.id);
+        localStorage.setItem('zamindar_name', data.user.displayName || email.split('@')[0]);
+        showSuccess('Account created! Redirecting...');
+        setTimeout(() => { window.location.href = '/zamindar.html'; }, 800);
+      } catch (err) {
+        showError('Network error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    }
+
+    async function handleLogin() {
+      hideMessages();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!email || !password) { showError('Email and password are required.'); return; }
+
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.textContent = 'Logging in...';
+
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Login failed'); return; }
+
+        localStorage.setItem('zamindar_token', data.token);
+        localStorage.setItem('zamindar_user', data.user.id);
+        localStorage.setItem('zamindar_name', data.user.displayName || email.split('@')[0]);
+        showSuccess('Welcome back! Redirecting...');
+        setTimeout(() => { window.location.href = '/zamindar.html'; }, 800);
+      } catch (err) {
+        showError('Network error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Log In';
+      }
+    }
+
+    function logout() {
+      const t = localStorage.getItem('zamindar_token');
+      if (t) {
+        fetch('/auth/logout', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + t },
+        }).catch(() => {});
+      }
+      localStorage.removeItem('zamindar_token');
+      localStorage.removeItem('zamindar_user');
+      localStorage.removeItem('zamindar_name');
+      window.location.reload();
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        if (document.getElementById('signupForm').classList.contains('active')) handleSignup();
+        else if (document.getElementById('loginForm').classList.contains('active')) handleLogin();
+      }
+    });
+
+    // Mobile redirect
     if (window.innerWidth <= 768 && window.location.pathname === '/zamindar.html') {
       window.location.href = '/zamindar-mobile.html';
     }
