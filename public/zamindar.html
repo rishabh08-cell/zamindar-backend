@@ -73,7 +73,8 @@
                     <div id="user-stats" class="user-stats"></div>
                 </div>
             </div>
-            <button class="btn-secondary" onclick="disconnectStrava()">Disconnect Strava</button>
+            <button class="btn-strava" id="btn-connect-strava" onclick="linkStrava()" style="display:none;">Connect Strava</button>
+            <button class="btn-secondary" id="btn-disconnect-strava" onclick="disconnectStrava()" style="display:none;">Disconnect Strava</button>
             <button class="btn-secondary" onclick="logout()">Log Out</button>
             <button class="btn-danger" onclick="showDeleteConfirm()">Delete My Account</button>
         </div>
@@ -122,12 +123,13 @@
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const API_BASE = window.location.origin;
-const INDIA_CENTER = [22.5, 78.9];
-const INDIA_ZOOM = 5;
-const params = new URLSearchParams(window.location.search);
-let currentUser = null;
-let authToken = null;
+var API_BASE = window.location.origin;
+var INDIA_CENTER = [22.5, 78.9];
+var INDIA_ZOOM = 5;
+var params = new URLSearchParams(window.location.search);
+var currentUser = null;
+var authToken = null;
+var userIsLoggedIn = false;
 
 if (params.get('token')) {
     authToken = params.get('token');
@@ -146,6 +148,8 @@ if (params.get('token')) {
 }
 
 if (authToken) {
+    userIsLoggedIn = true;
+    showLoggedIn(currentUser);
     fetch(API_BASE + '/auth/me', { headers: { 'Authorization': 'Bearer ' + authToken } })
     .then(function(r) { if (!r.ok) throw new Error('expired'); return r.json(); })
     .then(function(data) {
@@ -162,6 +166,7 @@ if (authToken) {
         } else { clearAuth(); }
     });
 } else if (currentUser && currentUser.id) {
+    userIsLoggedIn = true;
     showLoggedIn(currentUser);
     fetch(API_BASE + '/auth/status?user=' + currentUser.id).then(function(r){return r.json();}).then(function(data) {
         if (data.authenticated) { currentUser = Object.assign({}, currentUser, data.user); localStorage.setItem('zamindar_user', JSON.stringify(currentUser)); showLoggedIn(currentUser); }
@@ -170,12 +175,20 @@ if (authToken) {
 }
 
 function showLoggedIn(user) {
+    userIsLoggedIn = true;
     document.getElementById('auth-loggedout').style.display = 'none';
     document.getElementById('auth-loggedin').style.display = 'block';
     document.getElementById('user-name').textContent = user.displayName || user.name || 'Runner';
     document.getElementById('user-avatar').src = user.avatarUrl || 'https://via.placeholder.com/40/ff6b00/1a0f0a?text=Z';
     document.getElementById('user-stats').textContent = (user.zonesOwned || 0) + ' zones | ' + (parseFloat(user.totalDistanceKm) || 0).toFixed(1) + ' km';
     document.getElementById('fomo-banner').style.display = 'none';
+    if (user.stravaConnected) {
+        document.getElementById('btn-connect-strava').style.display = 'none';
+        document.getElementById('btn-disconnect-strava').style.display = 'block';
+    } else {
+        document.getElementById('btn-connect-strava').style.display = 'block';
+        document.getElementById('btn-disconnect-strava').style.display = 'none';
+    }
 }
 
 function clearAuth() {
@@ -183,6 +196,7 @@ function clearAuth() {
     localStorage.removeItem('zamindar_user');
     authToken = null;
     currentUser = null;
+    userIsLoggedIn = false;
     document.getElementById('auth-loggedout').style.display = 'block';
     document.getElementById('auth-loggedin').style.display = 'none';
 }
@@ -195,11 +209,24 @@ function logout() {
     addActivity('You have been logged out.');
 }
 
+function linkStrava() {
+    var linkUrl = '/auth/strava';
+    if (authToken) { linkUrl += '?link_token=' + encodeURIComponent(authToken); }
+    window.location.href = linkUrl;
+}
+
 function disconnectStrava() {
     if (!authToken) { addActivity('No active session.'); return; }
     fetch(API_BASE + '/auth/strava', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } })
     .then(function(r) { return r.json(); })
-    .then(function(data) { addActivity(data.message || 'Strava disconnected.'); })
+    .then(function(data) {
+        if (data.success) {
+            addActivity('Strava disconnected.');
+            document.getElementById('btn-connect-strava').style.display = 'block';
+            document.getElementById('btn-disconnect-strava').style.display = 'none';
+            if (currentUser) { currentUser.stravaConnected = false; localStorage.setItem('zamindar_user', JSON.stringify(currentUser)); }
+        } else { addActivity('Failed: ' + (data.error || 'Unknown error')); }
+    })
     .catch(function() { addActivity('Error disconnecting Strava.'); });
 }
 
@@ -314,7 +341,7 @@ function addActivity(text) {
 
 function closeFomo() { document.getElementById('fomo-banner').style.display = 'none'; }
 
-if (!currentUser) { setTimeout(function() { document.getElementById('fomo-banner').style.display = 'block'; }, 5000); }
+if (!userIsLoggedIn) { setTimeout(function() { if (!userIsLoggedIn) { document.getElementById('fomo-banner').style.display = 'block'; } }, 5000); }
 if (window.innerWidth <= 768) { window.location.href = '/zamindar-mobile.html'; }
 map.on('moveend', function() { loadTerritories(); });
 loadTerritories();
