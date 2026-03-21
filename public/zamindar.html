@@ -61,9 +61,11 @@
     </div>
     <div class="panel-section" id="auth-section">
         <div id="auth-loggedout">
-            <h3>Connect to Play</h3>
-            <p style="font-size:0.85rem; color:#a08060; margin-bottom:0.5rem;">Link your Strava account to claim territory with every run.</p>
-            <button class="btn-strava" onclick="window.location.href='/auth/strava'">Connect Strava</button>
+            <h3>Join the Game</h3>
+            <p style="font-size:0.85rem; color:#a08060; margin-bottom:0.5rem;">Create an account or log in to claim territory with every run.</p>
+            <button class="btn-strava" onclick="window.location.href='/'">Log In / Sign Up</button>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;"><div style="flex:1; height:1px; background:#3d2b1f;"></div><span style="color:#6a5040; font-size:0.8rem;">or</span><div style="flex:1; height:1px; background:#3d2b1f;"></div></div>
+            <button class="btn-secondary" onclick="window.location.href='/auth/strava'">Sign up with Strava</button>
         </div>
         <div id="auth-loggedin" style="display:none;">
             <div class="user-profile">
@@ -108,8 +110,8 @@
 <div class="fomo-banner" id="fomo-banner">
     <button class="fomo-close" onclick="closeFomo()">&times;</button>
     <h4>3 runners claimed territory near you today</h4>
-    <p>Connect Strava to defend your zameen before the 48hr siege expires.</p>
-    <button class="btn-strava" onclick="window.location.href='/auth/strava'" style="margin-top:0.5rem;">Connect Strava</button>
+    <p>Log in or sign up to defend your zameen before the 48hr siege expires.</p>
+    <button class="btn-strava" onclick="window.location.href='/'" style="margin-top:0.5rem;">Log In / Sign Up</button>
 </div>
 <div class="confirm-overlay" id="delete-confirm">
     <div class="confirm-box">
@@ -305,7 +307,7 @@ function loadLeaderboard() {
             el.innerHTML = '<div class="leaderboard-item"><span class="runner-name">No runners yet. Be the first!</span></div>';
         }
     }).catch(function() {
-        document.getElementById('leaderboard').innerHTML = '<div class="leaderboard-item"><span class="runner-name">Connect Strava to start!</span></div>';
+        document.getElementById('leaderboard').innerHTML = '<div class="leaderboard-item"><span class="runner-name">Log in to start!</span></div>';
     });
 }
 
