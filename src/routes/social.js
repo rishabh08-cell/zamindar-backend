@@ -19,6 +19,13 @@ const {
     disbandFauj,
     listFaujs,
 } = require('../db/fauj');
+const {
+    createDuel,
+    acceptDuel,
+    cancelDuel,
+    getUserDuels,
+} = require('../db/duels');
+const { areInSameFauj } = require('../db/fauj');
 
 // ─── Friend (Dost) Routes ───────────────────────────────────────────────────
 
@@ -201,6 +208,63 @@ router.delete('/fauj/:id', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('Disband fauj error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// ─── Dwandva (Duel) Routes ──────────────────────────────────────────────────
+
+// GET /api/social/duels — my active/pending duels
+router.get('/duels', async (req, res) => {
+    try {
+        const duels = await getUserDuels(req.userId);
+        res.json({ duels });
+    } catch (err) {
+        console.error('Get duels error:', err.message);
+        res.status(500).json({ error: 'Failed to fetch duels' });
+    }
+});
+
+// POST /api/social/duels/challenge — challenge a fauj mate
+router.post('/duels/challenge', async (req, res) => {
+    try {
+        const { opponentId } = req.body;
+        if (!opponentId) return res.status(400).json({ error: 'opponentId required' });
+        if (opponentId === req.userId) return res.status(400).json({ error: 'Cannot duel yourself' });
+
+        // Must be in the same fauj
+        const myFauj = await getUserFauj(req.userId);
+        if (!myFauj) return res.status(400).json({ error: 'You are not in a Fauj' });
+
+        const same = await areInSameFauj(req.userId, opponentId);
+        if (!same) return res.status(400).json({ error: 'You can only duel members of your own Fauj' });
+
+        const duel = await createDuel(req.userId, opponentId, myFauj.fauj_id);
+        res.json({ success: true, duel });
+    } catch (err) {
+        console.error('Create duel error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// POST /api/social/duels/:id/accept — accept a duel challenge
+router.post('/duels/:id/accept', async (req, res) => {
+    try {
+        const duel = await acceptDuel(req.params.id, req.userId);
+        res.json({ success: true, duel });
+    } catch (err) {
+        console.error('Accept duel error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// POST /api/social/duels/:id/cancel — cancel a duel
+router.post('/duels/:id/cancel', async (req, res) => {
+    try {
+        const duel = await cancelDuel(req.params.id, req.userId);
+        res.json({ success: true, duel });
+    } catch (err) {
+        console.error('Cancel duel error:', err.message);
         res.status(400).json({ error: err.message });
     }
 });

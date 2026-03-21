@@ -119,19 +119,22 @@ function computeActiveWindow(newRun, existingRuns, now = new Date()) {
  */
 /**
  * Filter out overlaps between Fauj allies. Members of the same Fauj
- * merge territory instead of fighting over it.
+ * merge territory instead of fighting over it — unless they have an
+ * active Dwandva (duel), in which case they fight normally.
  *
  * @param {string[]} faujMemberIds - user IDs in the same fauj as newRun's owner (empty if no fauj)
  * @param {string[]} friendIds - user IDs who are friends with newRun's owner
+ * @param {string[]} activeDuelPartnerIds - user IDs with active duels against newRun's owner
  */
-function detectConflicts(newRun, overlappingRuns, faujMemberIds = [], friendIds = []) {
+function detectConflicts(newRun, overlappingRuns, faujMemberIds = [], friendIds = [], activeDuelPartnerIds = []) {
   const faujSet = new Set(faujMemberIds);
   const friendSet = new Set(friendIds);
+  const duelSet = new Set(activeDuelPartnerIds);
 
   return overlappingRuns
     .filter(existingRun => {
-      // Same fauj = no conflict (territories merge)
-      if (faujSet.has(existingRun.user_id)) return false;
+      // Same fauj = no conflict UNLESS there's an active duel
+      if (faujSet.has(existingRun.user_id) && !duelSet.has(existingRun.user_id)) return false;
       return true;
     })
     .map(existingRun => {
@@ -364,8 +367,9 @@ function buildGeoJSON(activeRuns, conflicts, users) {
  * @param {string[]} faujMemberIds - user IDs in same fauj as runner (empty if no fauj)
  * @param {string[]} friendIds - user IDs who are friends with runner
  * @param {Object} faujAllyZoneCounts - { [userId]: number } nearby zone counts for fauj allies
+ * @param {string[]} activeDuelPartnerIds - user IDs with active duels against runner
  */
-function processNewRun({ newRun, existingUserRuns, overlappingRuns, cities, userStats, users, faujMemberIds = [], friendIds = [], faujAllyZoneCounts = {} }) {
+function processNewRun({ newRun, existingUserRuns, overlappingRuns, cities, userStats, users, faujMemberIds = [], friendIds = [], faujAllyZoneCounts = {}, activeDuelPartnerIds = [] }) {
   // 1. Qualify
   const { qualified, reason } = qualifyRun(newRun);
   if (!qualified) {
@@ -378,8 +382,8 @@ function processNewRun({ newRun, existingUserRuns, overlappingRuns, cities, user
   // 3. Compute which runs stay active
   const { toActivate, toDeactivate } = computeActiveWindow(newRun, existingUserRuns);
 
-  // 4. Detect + score conflicts (fauj allies' overlaps are auto-merged, not conflicted)
-  const rawConflicts   = detectConflicts(newRun, overlappingRuns, faujMemberIds, friendIds);
+  // 4. Detect + score conflicts (fauj allies' overlaps are auto-merged, unless dueling)
+  const rawConflicts   = detectConflicts(newRun, overlappingRuns, faujMemberIds, friendIds, activeDuelPartnerIds);
   const scoredConflicts = rawConflicts.map(c => {
     const allyCountA = faujAllyZoneCounts[c.run_a_owner] || 0;
     const allyCountB = faujAllyZoneCounts[c.run_b_owner] || 0;
