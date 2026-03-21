@@ -95,7 +95,10 @@ async function deleteUser(userId) {
       // Delete in order: zones → runs → strava_connections → sessions → user
   // ON DELETE CASCADE handles strava_connections and sessions.
   // zones and runs reference user_id but may not have CASCADE, so be explicit.
-  await supabase.from('zone_history').delete().eq('user_id', userId);
+  await supabase.from('fauj_invites').delete().or(`invited_by.eq.${userId},invited_user_id.eq.${userId}`);
+      await supabase.from('fauj_members').delete().eq('user_id', userId);
+      await supabase.from('friendships').delete().or(`requester_id.eq.${userId},recipient_id.eq.${userId}`);
+      await supabase.from('zone_history').delete().eq('user_id', userId);
       await supabase.from('zones').delete().eq('user_id', userId);
       await supabase.from('runs').delete().eq('user_id', userId);
       await supabase.from('city_coverage').delete().eq('user_id', userId);

@@ -6,6 +6,7 @@ const webhookRoutes = require('./routes/webhook');
 const mapRoutes = require('./routes/map');
 const authRoutes = require('./routes/auth');
 const zonesRoutes = require('./routes/zones');
+const socialRoutes = require('./routes/social');
 
 const { requireAuth } = require('./middleware/auth');
 const { verifyWebhook } = require('./middleware/webhookSignature');
@@ -26,6 +27,7 @@ app.use('/webhook', verifyWebhook, webhookRoutes);
 
 app.use('/api/map', requireAuth, mapRoutes);
 app.use('/api/zones', requireAuth, zonesRoutes);
+app.use('/api/social', requireAuth, socialRoutes);
 
 app.use(express.static('public'));
 
