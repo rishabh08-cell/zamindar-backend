@@ -348,7 +348,9 @@
     .run-history-item {
       display: flex; align-items: center; gap: 10px;
       padding: 0.6rem 0; border-bottom: 1px solid #eee;
+      transition: background 0.15s;
     }
+    .run-history-item[onclick]:active { background: #fff3ee; }
     .run-dot { width: 8px; height: 8px; border-radius: 50%; background: #e07850; flex-shrink: 0; }
     .run-info { flex: 1; }
     .run-title { color: #1a1a2e; font-size: 0.85rem; }
@@ -799,11 +801,15 @@
             if (currentFilter === 'mine' && t.runner_id !== userId) return;
             if (currentFilter === 'contested' && !t.contested) return;
             if (t.geojson) {
-              var color = getRunnerColor(t.runner_id || 'default');
+              var isOwn = userId && t.runner_id === userId;
+              var color = isOwn ? '#e07850' : getRunnerColor(t.runner_id || 'default');
               var layer = L.geoJSON(t.geojson, {
                 style: {
-                  color: color, fillColor: color,
-                  fillOpacity: 0.25, weight: 2, dashArray: t.contested ? '5,5' : null
+                  color: isOwn ? '#ff6b35' : color,
+                  fillColor: color,
+                  fillOpacity: isOwn ? 0.35 : 0.25,
+                  weight: isOwn ? 3 : 2,
+                  dashArray: t.contested ? '5,5' : null
                 }
               });
               var siegeHtml = '';
@@ -1094,6 +1100,8 @@
       document.querySelector('[onclick="filterTerritories(\'' + filter + '\')"]').classList.add('active');
       // Re-render territories with filter
       loadTerritories();
+      // When switching to "My territory", fly to user's zones
+      if (filter === 'mine') flyToMyZones();
     }
 
     // ── Tutorial ──
@@ -1357,6 +1365,35 @@
     }
 
     // ── Run History ──
+    var userZoneGeoms = []; // cached for fly-to
+
+    function flyToZone(idx) {
+      var z = userZoneGeoms[idx];
+      if (!z) return;
+      try {
+        var geom = typeof z === 'string' ? JSON.parse(z) : z;
+        var layer = L.geoJSON(geom);
+        map.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 16 });
+        // Collapse bottom sheet so the map is visible
+        var sheet = document.getElementById('bottom-sheet');
+        if (sheet) sheet.style.transform = 'translateY(calc(100% - 60px))';
+      } catch (e) { console.log('flyToZone error:', e); }
+    }
+
+    function flyToMyZones() {
+      if (userZoneGeoms.length === 0) return;
+      var group = L.featureGroup();
+      userZoneGeoms.forEach(function(z) {
+        try {
+          var geom = typeof z === 'string' ? JSON.parse(z) : z;
+          group.addLayer(L.geoJSON(geom));
+        } catch (e) {}
+      });
+      if (group.getLayers().length > 0) {
+        map.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 15 });
+      }
+    }
+
     function loadRunHistory() {
       if (!isAuthenticated || !userProfile) return;
       var userId = userProfile.id;
@@ -1365,19 +1402,21 @@
       .then(function(data) {
         var el = document.getElementById('run-history');
         var zones = data.zones || [];
+        userZoneGeoms = zones.map(function(z) { return z.geom; }).filter(Boolean);
         if (zones.length === 0) {
           el.innerHTML = '<div style="text-align:center; color:#999; padding:1rem; font-size:0.85rem;">No runs yet. Connect Strava and start running!</div>';
           return;
         }
-        // Show most recent 10
-        el.innerHTML = zones.slice(0, 10).map(function(z) {
+        // Show most recent 10 — clickable to fly to zone
+        el.innerHTML = zones.slice(0, 10).map(function(z, i) {
           var distKm = z.runs && z.runs.distance_km ? z.runs.distance_km : ((z.distance_m || 0) / 1000);
           var dateStr = z.created_at ? new Date(z.created_at).toLocaleDateString() : '';
           var areaKm2 = ((z.area_m2 || 0) / 1000000).toFixed(3);
-          return '<div class="run-history-item">' +
+          var hasGeom = z.geom ? ' onclick="flyToZone(' + i + ')" style="cursor:pointer;"' : '';
+          return '<div class="run-history-item"' + hasGeom + '>' +
             '<div class="run-dot"></div>' +
             '<div class="run-info"><div class="run-title">' + distKm.toFixed(1) + ' km run</div><div class="run-meta">' + dateStr + '</div></div>' +
-            '<div class="run-area">' + areaKm2 + ' km\u00B2</div></div>';
+            '<div class="run-area">' + areaKm2 + ' km\u00B2 &#x279C;</div></div>';
         }).join('');
       }).catch(function() {
         document.getElementById('run-history').innerHTML = '<div style="text-align:center; color:#999; padding:1rem; font-size:0.85rem;">Could not load run history.</div>';
