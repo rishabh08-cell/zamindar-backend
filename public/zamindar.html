@@ -259,8 +259,10 @@ if (authToken) {
         currentUser = { id: data.user.id, name: data.user.displayName, displayName: data.user.displayName, avatarUrl: data.user.avatarUrl, zonesOwned: data.user.zonesOwned, totalDistanceKm: data.user.totalDistanceKm, stravaConnected: data.user.stravaConnected };
         localStorage.setItem('zamindar_user', JSON.stringify(currentUser));
         showLoggedIn(currentUser);
-        // Center map on user's home city
-        if (data.user.homeCity && data.user.homeCity.lat && data.user.homeCity.lng) {
+        // Center map on latest run (best), or home city (fallback)
+        if (data.user.lastRunCenter) {
+            map.setView([data.user.lastRunCenter.lat, data.user.lastRunCenter.lng], 14);
+        } else if (data.user.homeCity && data.user.homeCity.lat) {
             map.setView([data.user.homeCity.lat, data.user.homeCity.lng], 12);
         }
     })

@@ -319,6 +319,29 @@ router.get('/me', async (req, res) => {
               } catch (e) { /* city may have been deleted */ }
       }
 
+      // Get centroid of most recent zone to center map
+      let lastRunCenter = null;
+      try {
+              const { data: latest } = await supabase
+                      .from('zones')
+                      .select('id, geom')
+                      .eq('user_id', user.id)
+                      .eq('is_active', true)
+                      .order('created_at', { ascending: false })
+                      .limit(1)
+                      .single();
+              if (latest && latest.geom) {
+                      // geom is a GeoJSON from PostGIS — extract centroid from coordinates
+                      const geom = typeof latest.geom === 'string' ? JSON.parse(latest.geom) : latest.geom;
+                      if (geom && geom.coordinates && geom.coordinates[0]) {
+                              const coords = geom.coordinates[0]; // outer ring
+                              let latSum = 0, lngSum = 0;
+                              for (const c of coords) { lngSum += c[0]; latSum += c[1]; }
+                              lastRunCenter = { lat: latSum / coords.length, lng: lngSum / coords.length };
+                      }
+              }
+      } catch (e) { /* no zones yet */ }
+
       res.json({
               user: {
                         id: user.id,
@@ -332,11 +355,46 @@ router.get('/me', async (req, res) => {
                         totalAreaM2: user.total_area_m2,
                         createdAt: user.created_at,
                         homeCity,
+                        lastRunCenter,
               },
       });
     } catch (err) {
           console.error('Auth /me error:', err);
           res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+});
+
+// ─── PUT /auth/home-city — Set user's home city ─────────────────────────────
+router.put('/home-city', async (req, res) => {
+    try {
+          const authHeader = req.headers.authorization;
+          if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                  return res.status(401).json({ error: 'Not authenticated' });
+          }
+
+      const token = authHeader.replace('Bearer ', '');
+          let decoded;
+          try {
+                  decoded = jwt.verify(token, JWT_SECRET);
+          } catch (e) {
+                  return res.status(401).json({ error: 'Invalid token' });
+          }
+
+      const { homeCityId } = req.body;
+          if (!homeCityId) return res.status(400).json({ error: 'homeCityId required' });
+
+      const { error } = await supabase
+              .from('users')
+              .update({ home_city_id: homeCityId })
+              .eq('id', decoded.userId);
+
+      if (error) throw error;
+
+      const city = await getCityById(homeCityId);
+          res.json({ success: true, homeCity: { id: city.id, name: city.name, lat: parseFloat(city.lat), lng: parseFloat(city.lng) } });
+    } catch (err) {
+          console.error('Set home city error:', err);
+          res.status(500).json({ error: 'Failed to set home city' });
     }
 });
 
@@ -495,7 +553,12 @@ router.get('/strava/callback', async (req, res) => {
       });
 
       // Redirect to app with token
-      res.redirect(`/zamindar.html?token=${encodeURIComponent(token)}&user=${user.id}&name=${encodeURIComponent(user.display_name)}`);
+      if (isNewUser) {
+              // New users go to city picker first
+              res.redirect(`/pick-city.html?token=${encodeURIComponent(token)}&user=${user.id}&name=${encodeURIComponent(user.display_name)}`);
+      } else {
+              res.redirect(`/zamindar.html?token=${encodeURIComponent(token)}&user=${user.id}&name=${encodeURIComponent(user.display_name)}`);
+      }
     } catch (err) {
           console.error('Auth callback error:', err);
           res.redirect('/?auth=error&reason=token_exchange');

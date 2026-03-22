@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zamindar - Pick Your City</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Tiro Devanagari Hindi', Georgia, serif;
+      background: #1a0f0a; color: #f5e6d3;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .container {
+      max-width: 420px; width: 90%; text-align: center; padding: 2rem 0;
+    }
+    h1 { color: #ff6b00; font-size: 2.5rem; margin-bottom: 0.25rem; }
+    .subtitle { color: #d4a574; font-size: 1.1rem; margin-bottom: 2rem; }
+    .city-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .city-btn {
+      padding: 1rem 0.5rem; background: #2a1a10; border: 2px solid #3a2a1a;
+      border-radius: 10px; color: #f5e6d3; font-size: 1rem;
+      font-family: inherit; cursor: pointer; transition: all 0.2s ease;
+    }
+    .city-btn:hover { border-color: #ff6b00; }
+    .city-btn.selected { border-color: #ff6b00; background: #3a2010; }
+    .city-btn .city-name { font-weight: bold; display: block; }
+    .city-btn .city-state { font-size: 0.75rem; color: #6a5040; display: block; margin-top: 2px; }
+    .continue-btn {
+      width: 100%; padding: 1rem; background: linear-gradient(135deg, #ff6b00, #ff8533);
+      color: white; border: none; border-radius: 8px; font-size: 1.1rem;
+      font-weight: bold; cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+      transition: all 0.2s ease; opacity: 0.5; pointer-events: none;
+    }
+    .continue-btn.active { opacity: 1; pointer-events: auto; }
+    .continue-btn.active:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 107, 0, 0.6); }
+    .skip-link {
+      display: block; margin-top: 1rem; color: #6a5040; font-size: 0.85rem;
+      text-decoration: none; cursor: pointer;
+    }
+    .skip-link:hover { color: #d4a574; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to Zamindar</h1>
+    <p class="subtitle">Which city do you run in?</p>
+    <div class="city-grid" id="cityGrid">
+      <div style="grid-column: 1/-1; color: #6a5040;">Loading cities...</div>
+    </div>
+    <button class="continue-btn" id="continueBtn" onclick="saveAndContinue()">Continue to Map</button>
+    <a class="skip-link" onclick="skipCity()">Skip for now</a>
+  </div>
+
+  <script>
+    var selectedCityId = null;
+
+    // Parse token from URL (set by Strava callback)
+    var params = new URLSearchParams(window.location.search);
+    var token = params.get('token');
+    var userId = params.get('user');
+    var userName = params.get('name');
+
+    // Store auth immediately
+    if (token) {
+      localStorage.setItem('zamindar_token', token);
+      localStorage.setItem('zamindar_user', userId);
+      localStorage.setItem('zamindar_name', userName || '');
+    }
+
+    async function loadCities() {
+      try {
+        var res = await fetch('/auth/cities');
+        if (!res.ok) return;
+        var data = await res.json();
+        var grid = document.getElementById('cityGrid');
+        grid.innerHTML = '';
+        (data.cities || []).forEach(function(c) {
+          var btn = document.createElement('button');
+          btn.className = 'city-btn';
+          btn.innerHTML = '<span class="city-name">' + c.name + '</span><span class="city-state">' + (c.state || '') + '</span>';
+          btn.onclick = function() {
+            document.querySelectorAll('.city-btn.selected').forEach(function(el) { el.classList.remove('selected'); });
+            btn.classList.add('selected');
+            selectedCityId = c.id;
+            document.getElementById('continueBtn').classList.add('active');
+          };
+          grid.appendChild(btn);
+        });
+      } catch(e) {
+        console.error('Failed to load cities:', e);
+      }
+    }
+
+    async function saveAndContinue() {
+      if (!selectedCityId || !token) { skipCity(); return; }
+      try {
+        await fetch('/auth/home-city', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ homeCityId: selectedCityId }),
+        });
+      } catch(e) { console.error('Failed to save city:', e); }
+      window.location.href = '/zamindar.html?token=' + encodeURIComponent(token) + '&user=' + userId + '&name=' + encodeURIComponent(userName || '');
+    }
+
+    function skipCity() {
+      window.location.href = '/zamindar.html?token=' + encodeURIComponent(token) + '&user=' + userId + '&name=' + encodeURIComponent(userName || '');
+    }
+
+    loadCities();
+  </script>
+</body>
+</html>
