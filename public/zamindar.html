@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zamindar - Territory Map</title>
+    <title id="page-title">Zamindar - Territory Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
     <style>
@@ -85,8 +85,8 @@
 <div id="map"></div>
 <div class="side-panel">
     <div class="panel-header">
-        <h1>Zamindar</h1>
-        <p>India's Running Territory Game</p>
+        <h1 id="lbl-app-name">Zamindar</h1>
+        <p id="lbl-app-tagline">India's Running Territory Game</p>
     </div>
     <div class="panel-section" id="auth-section">
         <div id="auth-loggedout">
@@ -111,23 +111,23 @@
         </div>
     </div>
     <div class="panel-section">
-        <h3>Top Zamindars</h3>
+        <h3 id="lbl-leaderboard-title">Top Zamindars</h3>
         <div id="leaderboard">
             <div class="leaderboard-item"><span class="runner-name">Loading...</span></div>
         </div>
     </div>
     <div class="panel-section">
-        <h3>Hukumnama (Activity)</h3>
+        <h3 id="lbl-activity-title">Hukumnama (Activity)</h3>
         <div id="activity-log" class="activity-log">
             <div class="activity-item">Waiting for activity...</div>
         </div>
     </div>
     <div class="panel-section" id="community-section" style="display:none;">
-        <h3>Biradari (Community)</h3>
+        <h3 id="lbl-community-title">Biradari (Community)</h3>
         <div class="community-tabs">
-            <button class="community-tab active" onclick="switchTab('dost')">Dost</button>
-            <button class="community-tab" onclick="switchTab('fauj')">Fauj</button>
-            <button class="community-tab" onclick="switchTab('dwandva')">Dwandva</button>
+            <button class="community-tab active" id="lbl-tab-friends" onclick="switchTab('dost')">Dost</button>
+            <button class="community-tab" id="lbl-tab-team" onclick="switchTab('fauj')">Fauj</button>
+            <button class="community-tab" id="lbl-tab-duel" onclick="switchTab('dwandva')">Dwandva</button>
         </div>
         <!-- DOST (Friends) Tab -->
         <div class="tab-content active" id="tab-dost">
@@ -149,21 +149,21 @@
     <div class="panel-section">
         <h3>Map Controls</h3>
         <div style="display:flex; flex-direction:column; gap:0.5rem;">
-            <button class="map-btn active" onclick="setView('india')">India View</button>
-            <button class="map-btn" onclick="setView('my')">My Zameen</button>
+            <button class="map-btn active" id="lbl-india-view" onclick="setView('india')">India View</button>
+            <button class="map-btn" id="lbl-my-land" onclick="setView('my')">My Zameen</button>
             <button class="map-btn" onclick="simulateRun()">Simulate Run</button>
         </div>
     </div>
 </div>
 <div class="map-controls">
-    <button class="map-btn active" onclick="setView('india')">India</button>
-    <button class="map-btn" onclick="setView('my')">My Zameen</button>
+    <button class="map-btn active" id="lbl-india-btn" onclick="setView('india')">India</button>
+    <button class="map-btn" id="lbl-my-land-btn" onclick="setView('my')">My Zameen</button>
     <button class="map-btn" onclick="simulateRun()">Simulate Run</button>
 </div>
 <div class="fomo-banner" id="fomo-banner">
     <button class="fomo-close" onclick="closeFomo()">&times;</button>
-    <h4>3 runners claimed territory near you today</h4>
-    <p>Log in or sign up to defend your zameen before the 48hr siege expires.</p>
+    <h4 id="lbl-fomo-title">3 runners claimed territory near you today</h4>
+    <p id="lbl-fomo-text">Log in or sign up to defend your zameen before the 48hr siege expires.</p>
     <button class="btn-strava" onclick="window.location.href='/'" style="margin-top:0.5rem;">Log In / Sign Up</button>
 </div>
 <div class="confirm-overlay" id="delete-confirm">
@@ -181,6 +181,63 @@
 var API_BASE = window.location.origin;
 var INDIA_CENTER = [22.5, 78.9];
 var INDIA_ZOOM = 5;
+
+// ─── LABELS CONFIG ──────────────────────────────────────────────────────────
+// Change product names & terminology in one place.
+var LABELS = {
+    appName:        'Zamindar',
+    appTagline:     "India's Running Territory Game",
+    pageTitle:      'Zamindar - Territory Map',
+    leaderboard:    'Top Zamindars',
+    activityLog:    'Hukumnama (Activity)',
+    community:      'Biradari (Community)',
+    tabFriends:     'Dost',
+    tabTeam:        'Fauj',
+    tabDuel:        'Dwandva',
+    indiaView:      'India View',
+    indiaBtn:       'India',
+    myLand:         'My Zameen',
+    fomoTitle:      '3 runners claimed territory near you today',
+    fomoText:       'Log in or sign up to defend your zameen before the 48hr siege expires.',
+    zoneUnit:       'zones',
+    defaultRunner:  'Runner',
+    teamLeader:     'Sardar',
+    noFriends:      'No friends yet. Share your profile to connect!',
+    noTeam:         'You are not in a ' + 'Fauj' + ' yet.',
+    noDuels:        'No active duels. Challenge a teammate from the team tab!',
+    teamNamePlaceholder: 'Team name...',
+    invitePlaceholder:   'User ID to invite...',
+    cityOwner:      'Zamindar',
+    siegeLabel:      'Under Siege!',
+};
+// Fix self-referencing labels after object creation
+LABELS.noTeam = 'You are not in a ' + LABELS.tabTeam + ' yet.';
+
+function applyLabels() {
+    var map = {
+        'page-title': LABELS.pageTitle,
+        'lbl-app-name': LABELS.appName,
+        'lbl-app-tagline': LABELS.appTagline,
+        'lbl-leaderboard-title': LABELS.leaderboard,
+        'lbl-activity-title': LABELS.activityLog,
+        'lbl-community-title': LABELS.community,
+        'lbl-tab-friends': LABELS.tabFriends,
+        'lbl-tab-team': LABELS.tabTeam,
+        'lbl-tab-duel': LABELS.tabDuel,
+        'lbl-india-view': LABELS.indiaView,
+        'lbl-my-land': LABELS.myLand,
+        'lbl-india-btn': LABELS.indiaBtn,
+        'lbl-my-land-btn': LABELS.myLand,
+        'lbl-fomo-title': LABELS.fomoTitle,
+        'lbl-fomo-text': LABELS.fomoText,
+    };
+    for (var id in map) {
+        var el = document.getElementById(id);
+        if (el) { if (id === 'page-title') { document.title = map[id]; } else { el.textContent = map[id]; } }
+    }
+}
+applyLabels();
+
 var params = new URLSearchParams(window.location.search);
 var currentUser = null;
 var authToken = null;
@@ -233,9 +290,9 @@ function showLoggedIn(user) {
     userIsLoggedIn = true;
     document.getElementById('auth-loggedout').style.display = 'none';
     document.getElementById('auth-loggedin').style.display = 'block';
-    document.getElementById('user-name').textContent = user.displayName || user.name || 'Runner';
+    document.getElementById('user-name').textContent = user.displayName || user.name || LABELS.defaultRunner;
     document.getElementById('user-avatar').src = user.avatarUrl || 'https://via.placeholder.com/40/ff6b00/1a0f0a?text=Z';
-    document.getElementById('user-stats').textContent = (user.zonesOwned || 0) + ' zones | ' + (parseFloat(user.totalDistanceKm) || 0).toFixed(1) + ' km';
+    document.getElementById('user-stats').textContent = (user.zonesOwned || 0) + ' ' + LABELS.zoneUnit + ' | ' + (parseFloat(user.totalDistanceKm) || 0).toFixed(1) + ' km';
     document.getElementById('fomo-banner').style.display = 'none';
     if (user.stravaConnected) {
         document.getElementById('btn-connect-strava').style.display = 'none';
@@ -326,7 +383,7 @@ function loadTerritories(bounds) {
                 if (t.geojson) {
                     var color = getRunnerColor(t.runner_id || 'default');
                     var layer = L.geoJSON(t.geojson, { style: { color: color, fillColor: color, fillOpacity: 0.3, weight: 2 } });
-                    layer.bindPopup('<div class="popup-content"><h4>' + (t.runner_name || 'Unknown') + '</h4><p>Distance: ' + (t.distance_m / 1000).toFixed(1) + ' km</p><p>Claimed: ' + new Date(t.created_at).toLocaleDateString() + '</p>' + (t.contested ? '<p class="siege">Under Siege!</p>' : '') + '</div>');
+                    layer.bindPopup('<div class="popup-content"><h4>' + (t.runner_name || 'Unknown') + '</h4><p>Distance: ' + (t.distance_m / 1000).toFixed(1) + ' km</p><p>Claimed: ' + new Date(t.created_at).toLocaleDateString() + '</p>' + (t.contested ? '<p class="siege">' + LABELS.siegeLabel + '</p>' : '') + '</div>');
                     layer.addTo(territoryLayer);
                 }
             });
@@ -342,7 +399,7 @@ function loadCities() {
             data.cities.forEach(function(c) {
                 var icon = L.divIcon({ className: 'city-marker', html: c.name.charAt(0) });
                 L.marker([c.lat, c.lng], { icon: icon })
-                    .bindPopup('<div class="popup-content"><h4>' + c.name + '</h4><p>Capture radius: ' + c.capture_radius_m + 'm</p><p>Multiplier: ' + c.multiplier + 'x</p>' + (c.zamindar ? '<p>Zamindar: ' + c.zamindar + '</p>' : '<p>Unclaimed!</p>') + '</div>')
+                    .bindPopup('<div class="popup-content"><h4>' + c.name + '</h4><p>Capture radius: ' + c.capture_radius_m + 'm</p><p>Multiplier: ' + c.multiplier + 'x</p>' + (c.zamindar ? '<p>' + LABELS.cityOwner + ': ' + c.zamindar + '</p>' : '<p>Unclaimed!</p>') + '</div>')
                     .addTo(cityLayer);
             });
         }
@@ -355,7 +412,7 @@ function loadLeaderboard() {
         var el = document.getElementById('leaderboard');
         if (data.leaderboard && data.leaderboard.length > 0) {
             el.innerHTML = data.leaderboard.map(function(r, i) {
-                return '<div class="leaderboard-item"><span class="runner-name">' + (i+1) + '. ' + (r.display_name || r.name) + '</span><span class="runner-score">' + (r.zones_owned || 0) + ' zones</span></div>';
+                return '<div class="leaderboard-item"><span class="runner-name">' + (i+1) + '. ' + (r.display_name || r.name) + '</span><span class="runner-score">' + (r.zones_owned || 0) + ' ' + LABELS.zoneUnit + '</span></div>';
             }).join('');
         } else {
             el.innerHTML = '<div class="leaderboard-item"><span class="runner-name">No runners yet. Be the first!</span></div>';
@@ -420,9 +477,9 @@ function loadDostList() {
     .then(function(data) {
         var el = document.getElementById('dost-list');
         var friends = data.friends || [];
-        if (friends.length === 0) { el.innerHTML = '<div class="social-empty">No friends yet. Share your profile to connect!</div>'; return; }
+        if (friends.length === 0) { el.innerHTML = '<div class="social-empty">' + LABELS.noFriends + '</div>'; return; }
         el.innerHTML = friends.map(function(f) {
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (f.display_name || 'Runner') + '</div><div class="social-card-sub">' + (f.zones_owned || 0) + ' zones</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-ghost" onclick="removeDost(\'' + f.friendship_id + '\')">Remove</button></div></div>';
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (f.display_name || LABELS.defaultRunner) + '</div><div class="social-card-sub">' + (f.zones_owned || 0) + ' ' + LABELS.zoneUnit + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-ghost" onclick="removeDost(\'' + f.friendship_id + '\')">Remove</button></div></div>';
         }).join('');
     }).catch(function() { document.getElementById('dost-list').innerHTML = '<div class="social-empty">Could not load friends.</div>'; });
 }
@@ -437,7 +494,7 @@ function loadDostRequests() {
         var el = document.getElementById('dost-requests');
         if (reqs.length === 0) { el.innerHTML = '<div class="social-empty">No pending requests.</div>'; return; }
         el.innerHTML = reqs.map(function(r) {
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (r.display_name || 'Runner') + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="acceptDost(\'' + r.friendship_id + '\')">Accept</button><button class="btn-sm btn-sm-ghost" onclick="declineDost(\'' + r.friendship_id + '\')">Decline</button></div></div>';
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (r.display_name || LABELS.defaultRunner) + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="acceptDost(\'' + r.friendship_id + '\')">Accept</button><button class="btn-sm btn-sm-ghost" onclick="declineDost(\'' + r.friendship_id + '\')">Decline</button></div></div>';
         }).join('');
     }).catch(function() {});
 }
@@ -467,9 +524,9 @@ function loadFauj() {
     .then(function(data) {
         var el = document.getElementById('fauj-content');
         if (!data.fauj) {
-            el.innerHTML = '<div class="social-empty">You are not in a Fauj yet.</div>' +
-                '<div class="input-row"><input id="fauj-name" class="input-sm" placeholder="Fauj name..."></div>' +
-                '<button class="btn-sm btn-sm-primary" onclick="createFauj()" style="width:100%;">Create Fauj</button>' +
+            el.innerHTML = '<div class="social-empty">' + LABELS.noTeam + '</div>' +
+                '<div class="input-row"><input id="fauj-name" class="input-sm" placeholder="' + LABELS.teamNamePlaceholder + '"></div>' +
+                '<button class="btn-sm btn-sm-primary" onclick="createFauj()" style="width:100%;">Create ' + LABELS.tabTeam + '</button>' +
                 '<div style="margin-top:0.75rem;"><button class="btn-sm btn-sm-ghost" onclick="loadFaujInvites()" style="width:100%;">Check Invites</button></div>' +
                 '<div id="fauj-invites" style="margin-top:0.5rem;"></div>';
             return;
@@ -479,29 +536,29 @@ function loadFauj() {
         var isLeader = data.role === 'leader';
         var html = '<div class="fauj-header"><span class="fauj-title">' + fauj.name + '</span><span class="fauj-badge">' + members.length + '/8</span></div>';
         html += members.map(function(m) {
-            var label = m.role === 'leader' ? ' (Sardar)' : '';
-            var duelBtn = (m.user_id !== currentUser.id) ? '<button class="btn-sm btn-sm-ghost" onclick="challengeDwandva(\'' + m.user_id + '\')">Duel</button>' : '';
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (m.display_name || 'Runner') + label + '</div><div class="social-card-sub">' + (m.zones_owned || 0) + ' zones</div></div></div><div class="social-card-actions">' + duelBtn + '</div></div>';
+            var label = m.role === 'leader' ? ' (' + LABELS.teamLeader + ')' : '';
+            var duelBtn = (m.user_id !== currentUser.id) ? '<button class="btn-sm btn-sm-ghost" onclick="challengeDwandva(\'' + m.user_id + '\')">' + LABELS.tabDuel + '</button>' : '';
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (m.display_name || LABELS.defaultRunner) + label + '</div><div class="social-card-sub">' + (m.zones_owned || 0) + ' ' + LABELS.zoneUnit + '</div></div></div><div class="social-card-actions">' + duelBtn + '</div></div>';
         }).join('');
         html += '<div style="margin-top:0.5rem;">';
         if (isLeader) {
-            html += '<div class="input-row"><input id="fauj-invite-id" class="input-sm" placeholder="User ID to invite..."><button class="btn-sm btn-sm-primary" onclick="inviteToFauj(\'' + fauj.id + '\')">Invite</button></div>';
+            html += '<div class="input-row"><input id="fauj-invite-id" class="input-sm" placeholder="' + LABELS.invitePlaceholder + '"><button class="btn-sm btn-sm-primary" onclick="inviteToFauj(\'' + fauj.id + '\')">Invite</button></div>';
         }
-        html += '<button class="btn-sm btn-sm-danger" onclick="leaveFauj()" style="width:100%;">' + (isLeader ? 'Disband Fauj' : 'Leave Fauj') + '</button>';
+        html += '<button class="btn-sm btn-sm-danger" onclick="leaveFauj()" style="width:100%;">' + (isLeader ? 'Disband ' + LABELS.tabTeam : 'Leave ' + LABELS.tabTeam) + '</button>';
         html += '</div>';
         el.innerHTML = html;
-    }).catch(function() { document.getElementById('fauj-content').innerHTML = '<div class="social-empty">Could not load Fauj.</div>'; });
+    }).catch(function() { document.getElementById('fauj-content').innerHTML = '<div class="social-empty">Could not load ' + LABELS.tabTeam + '.</div>'; });
 }
 
 function createFauj() {
     var name = document.getElementById('fauj-name').value.trim();
-    if (!name) { addActivity('Enter a Fauj name.'); return; }
+    if (!name) { addActivity('Enter a ' + LABELS.tabTeam + ' name.'); return; }
     fetch(API_BASE + '/api/social/fauj', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ name: name }) })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-        if (data.success) { loadFauj(); addActivity('Fauj "' + name + '" created!'); }
+        if (data.success) { loadFauj(); addActivity(LABELS.tabTeam + ' "' + name + '" created!'); }
         else { addActivity('Error: ' + (data.error || 'Failed')); }
-    }).catch(function() { addActivity('Error creating Fauj.'); });
+    }).catch(function() { addActivity('Error creating ' + LABELS.tabTeam + '.'); });
 }
 
 function inviteToFauj(faujId) {
@@ -523,7 +580,7 @@ function loadFaujInvites() {
         var invites = data.invites || [];
         if (invites.length === 0) { el.innerHTML = '<div class="social-empty">No pending invites.</div>'; return; }
         el.innerHTML = invites.map(function(inv) {
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (inv.fauj_name || 'Fauj') + '</div><div class="social-card-sub">From ' + (inv.invited_by_name || 'someone') + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="respondInvite(\'' + inv.id + '\', true)">Join</button><button class="btn-sm btn-sm-ghost" onclick="respondInvite(\'' + inv.id + '\', false)">Decline</button></div></div>';
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (inv.fauj_name || LABELS.tabTeam) + '</div><div class="social-card-sub">From ' + (inv.invited_by_name || 'someone') + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="respondInvite(\'' + inv.id + '\', true)">Join</button><button class="btn-sm btn-sm-ghost" onclick="respondInvite(\'' + inv.id + '\', false)">Decline</button></div></div>';
         }).join('');
     }).catch(function() {});
 }
@@ -532,7 +589,7 @@ function respondInvite(id, accept) {
     fetch(API_BASE + '/api/social/fauj/invites/' + id + '/respond', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ accept: accept }) })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-        if (data.success) { loadFauj(); addActivity(accept ? 'Joined Fauj!' : 'Invite declined.'); }
+        if (data.success) { loadFauj(); addActivity(accept ? 'Joined ' + LABELS.tabTeam + '!' : 'Invite declined.'); }
         else { addActivity('Error: ' + (data.error || 'Failed')); }
     }).catch(function() { addActivity('Error responding to invite.'); });
 }
@@ -541,9 +598,9 @@ function leaveFauj() {
     fetch(API_BASE + '/api/social/fauj/leave', { method: 'POST', headers: authHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-        if (data.success) { loadFauj(); addActivity('Left Fauj.'); }
+        if (data.success) { loadFauj(); addActivity('Left ' + LABELS.tabTeam + '.'); }
         else { addActivity('Error: ' + (data.error || 'Failed')); }
-    }).catch(function() { addActivity('Error leaving Fauj.'); });
+    }).catch(function() { addActivity('Error leaving ' + LABELS.tabTeam + '.'); });
 }
 
 // --- DWANDVA (Duels) ---
@@ -553,7 +610,7 @@ function loadDwandva() {
     .then(function(data) {
         var el = document.getElementById('dwandva-content');
         var duels = data.duels || [];
-        if (duels.length === 0) { el.innerHTML = '<div class="social-empty">No active duels. Challenge a Fauj mate from the Fauj tab!</div>'; return; }
+        if (duels.length === 0) { el.innerHTML = '<div class="social-empty">' + LABELS.noDuels + '</div>'; return; }
         el.innerHTML = duels.map(function(d) {
             var isChallenger = d.challenger_id === currentUser.id;
             var otherName = isChallenger ? (d.opponent && d.opponent.display_name || 'Opponent') : (d.challenger && d.challenger.display_name || 'Challenger');
