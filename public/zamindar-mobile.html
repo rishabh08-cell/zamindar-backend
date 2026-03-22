@@ -288,15 +288,47 @@
       padding: 1rem; border-top: 1px solid #2d1f14;
     }
     .profile-section h3 { color: #ff8533; font-size: 0.95rem; margin-bottom: 0.6rem; }
-    .badge-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    /* ── Social / Community ── */
+    .community-tabs {
+      display: flex; gap: 0; border-bottom: 1px solid #3d2b1f; margin-bottom: 0.75rem;
     }
-    .badge {
-      background: #2d1f14; border-radius: 10px; padding: 0.6rem 0.3rem;
-      text-align: center; font-size: 0.7rem; color: #5a4030;
+    .community-tab {
+      flex: 1; padding: 0.6rem 0; text-align: center; font-size: 0.82rem;
+      color: #5a4030; background: none; border: none;
+      border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit;
     }
-    .badge.earned { border: 1px solid #ff6b00; color: #ff6b00; }
-    .badge .badge-icon { font-size: 1.5rem; display: block; margin-bottom: 2px; }
+    .community-tab.active { color: #ff6b00; border-bottom-color: #ff6b00; }
+    .social-card {
+      background: #2d1f14; border-radius: 8px; padding: 0.6rem 0.75rem;
+      margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;
+    }
+    .social-card-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; flex: 1; }
+    .social-card-name { color: #f5e6d3; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .social-card-sub { color: #5a4030; font-size: 0.7rem; }
+    .social-card-actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
+    .btn-sm { padding: 0.35rem 0.6rem; font-size: 0.72rem; border-radius: 6px; cursor: pointer; font-family: inherit; border: none; }
+    .btn-sm-primary { background: #ff6b00; color: #fff; }
+    .btn-sm-primary:active { background: #e04400; }
+    .btn-sm-ghost { background: none; color: #a08060; border: 1px solid #3d2b1f; }
+    .btn-sm-ghost:active { background: #3d2b1f; }
+    .btn-sm-danger { background: none; color: #cc4444; border: 1px solid #cc4444; }
+    .btn-sm-danger:active { background: #cc4444; color: #fff; }
+    .social-empty { color: #5a4030; font-size: 0.82rem; text-align: center; padding: 1rem 0; }
+    .fauj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .fauj-title { color: #ff8533; font-size: 1rem; font-weight: bold; }
+    .fauj-badge { display: inline-block; background: #ff6b00; color: #1a0f0a; font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: bold; }
+    .duel-status { font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 10px; }
+    .duel-pending { background: #5a3e2e; color: #e9c46a; }
+    .duel-accepted { background: #2a4d3e; color: #2a9d8f; }
+    .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .input-sm {
+      flex: 1; padding: 0.45rem 0.6rem; background: #2d1f14;
+      border: 1px solid #3d2b1f; border-radius: 6px; color: #f5e6d3;
+      font-size: 0.82rem; font-family: inherit;
+    }
+    .input-sm::placeholder { color: #5a3e2e; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
     .run-history-item {
       display: flex; align-items: center; gap: 10px;
       padding: 0.6rem 0; border-bottom: 1px solid #2d1f14;
@@ -448,6 +480,10 @@
       <span class="icon">&#x1F3C6;</span>
       <span>Zamindars</span>
     </button>
+    <button class="nav-btn" id="nav-biradari" onclick="switchScreen('biradari')">
+      <span class="icon">&#x1F91D;</span>
+      <span>Biradari</span>
+    </button>
     <button class="nav-btn" id="nav-profile" onclick="switchScreen('profile')">
       <span class="icon">&#x1F464;</span>
       <span>Profile</span>
@@ -497,6 +533,38 @@
     <button class="fomo-dismiss" onclick="closeFomo()">Maybe later</button>
   </div>
 
+  <!-- Biradari (Community) Screen -->
+  <div class="profile-screen" id="biradari-screen">
+    <div class="profile-header" style="padding-bottom:0.5rem;">
+      <button class="profile-back" onclick="switchScreen('map')">&larr;</button>
+      <div class="profile-name">Biradari</div>
+      <div class="profile-subtitle">Community</div>
+    </div>
+    <div style="padding:0 1rem;">
+      <div class="community-tabs">
+        <button class="community-tab active" onclick="switchCommunityTab('dost')">Dost</button>
+        <button class="community-tab" onclick="switchCommunityTab('fauj')">Fauj</button>
+        <button class="community-tab" onclick="switchCommunityTab('dwandva')">Dwandva</button>
+      </div>
+      <!-- Dost (Friends) Tab -->
+      <div class="tab-content active" id="mob-tab-dost">
+        <div id="mob-dost-list"><div class="social-empty">Log in to see friends</div></div>
+        <div style="margin-top:0.5rem;">
+          <button class="btn-sm btn-sm-ghost" onclick="toggleMobDostRequests()" style="width:100%;margin-bottom:0.5rem;">Pending Requests <span id="mob-dost-req-count"></span></button>
+          <div id="mob-dost-requests" style="display:none;"></div>
+        </div>
+      </div>
+      <!-- Fauj (Army) Tab -->
+      <div class="tab-content" id="mob-tab-fauj">
+        <div id="mob-fauj-content"><div class="social-empty">Log in to see your Fauj</div></div>
+      </div>
+      <!-- Dwandva (Duel) Tab -->
+      <div class="tab-content" id="mob-tab-dwandva">
+        <div id="mob-dwandva-content"><div class="social-empty">Log in to see duels</div></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Profile Screen -->
   <div class="profile-screen" id="profile-screen">
     <div class="profile-header">
@@ -520,23 +588,10 @@
       </div>
     </div>
     <div class="profile-section">
-      <h3>Badges</h3>
-      <div class="badge-grid">
-        <div class="badge" id="badge-first"><span class="badge-icon">&#x1F3C5;</span>First Run</div>
-        <div class="badge" id="badge-10k"><span class="badge-icon">&#x1F525;</span>10km Club</div>
-        <div class="badge" id="badge-city"><span class="badge-icon">&#x1F3D9;&#xFE0F;</span>City Zamindar</div>
-        <div class="badge" id="badge-siege"><span class="badge-icon">&#x2694;&#xFE0F;</span>Siege Winner</div>
-        <div class="badge" id="badge-5runs"><span class="badge-icon">&#x26A1;</span>5 Runs</div>
-        <div class="badge" id="badge-50k"><span class="badge-icon">&#x1F48E;</span>50km Club</div>
-        <div class="badge" id="badge-multi"><span class="badge-icon">&#x1F30D;</span>Multi-city</div>
-        <div class="badge" id="badge-streak"><span class="badge-icon">&#x1F4AA;</span>3-day Streak</div>
-      </div>
-    </div>
-    <div class="profile-section">
       <h3>Recent Runs</h3>
       <div id="run-history">
         <div style="text-align:center; color:#5a4030; padding:1rem; font-size:0.85rem;">
-          Link Strava to see your run history
+          Log in to see your run history
         </div>
       </div>
     </div>
@@ -684,6 +739,8 @@
         if (!userProfile.stravaConnected) {
           cta.innerHTML = '<button class="btn-strava" onclick="window.location.href=\'/auth/strava\'">Link Strava Account</button>';
         }
+        // Load social and run data after auth
+        if (typeof loadRunHistory === 'function') loadRunHistory();
       } else {
         dot.className = 'status-dot';
         text.textContent = 'Not logged in';
@@ -821,14 +878,22 @@
       currentScreen = screen;
       // Reset active states
       document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+      // Close all screens
+      document.getElementById('profile-screen').classList.remove('open');
+      document.getElementById('biradari-screen').classList.remove('open');
 
       if (screen === 'map') {
-        document.getElementById('profile-screen').classList.remove('open');
         document.getElementById('nav-map').classList.add('active');
         map.invalidateSize();
       } else if (screen === 'profile') {
         document.getElementById('profile-screen').classList.add('open');
         document.getElementById('nav-profile').classList.add('active');
+        loadRunHistory();
+      } else if (screen === 'biradari') {
+        if (!isAuthenticated) { window.location.href = '/'; return; }
+        document.getElementById('biradari-screen').classList.add('open');
+        document.getElementById('nav-biradari').classList.add('active');
+        loadCommunity();
       }
     }
 
@@ -1044,6 +1109,252 @@
       card.style.transform = 'translateY(30px)';
       card.style.opacity = '0';
       setTimeout(function() { card.style.display = 'none'; }, 300);
+      sessionStorage.setItem('fomo_dismissed', '1');
+    }
+
+    // ── Auth helpers for social API ──
+    function authHeaders() {
+      var token = localStorage.getItem('zamindar_token');
+      return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+    }
+
+    // ── Biradari (Community) ──
+    function switchCommunityTab(tab) {
+      document.querySelectorAll('.community-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelector('[onclick="switchCommunityTab(\'' + tab + '\')"]').classList.add('active');
+      document.getElementById('mob-tab-' + tab).classList.add('active');
+    }
+
+    function toggleMobDostRequests() {
+      var el = document.getElementById('mob-dost-requests');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // --- DOST (Friends) ---
+    function loadMobDostList() {
+      fetch(API_BASE + '/api/social/friends', { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var el = document.getElementById('mob-dost-list');
+        var friends = data.friends || [];
+        if (friends.length === 0) { el.innerHTML = '<div class="social-empty">No friends yet. Share your profile to connect!</div>'; return; }
+        el.innerHTML = friends.map(function(f) {
+          return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (f.display_name || 'Runner') + '</div><div class="social-card-sub">' + (f.zones_owned || 0) + ' zones</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-ghost" onclick="removeMobDost(\'' + f.friendship_id + '\')">Remove</button></div></div>';
+        }).join('');
+      }).catch(function() { document.getElementById('mob-dost-list').innerHTML = '<div class="social-empty">Could not load friends.</div>'; });
+    }
+
+    function loadMobDostRequests() {
+      fetch(API_BASE + '/api/social/friends/requests', { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var reqs = data.requests || [];
+        var countEl = document.getElementById('mob-dost-req-count');
+        countEl.textContent = reqs.length > 0 ? '(' + reqs.length + ')' : '';
+        var el = document.getElementById('mob-dost-requests');
+        if (reqs.length === 0) { el.innerHTML = '<div class="social-empty">No pending requests.</div>'; return; }
+        el.innerHTML = reqs.map(function(r) {
+          return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (r.display_name || 'Runner') + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="acceptMobDost(\'' + r.friendship_id + '\')">Accept</button><button class="btn-sm btn-sm-ghost" onclick="declineMobDost(\'' + r.friendship_id + '\')">Decline</button></div></div>';
+        }).join('');
+      }).catch(function() {});
+    }
+
+    function acceptMobDost(id) {
+      fetch(API_BASE + '/api/social/friends/' + id + '/accept', { method: 'POST', headers: authHeaders() })
+      .then(function() { loadMobDostList(); loadMobDostRequests(); addActivity('\u{1F91D}', 'Friend request accepted!'); showToast('Friend added!', 'success'); })
+      .catch(function() { showToast('Error accepting request', 'error'); });
+    }
+
+    function declineMobDost(id) {
+      fetch(API_BASE + '/api/social/friends/' + id + '/decline', { method: 'POST', headers: authHeaders() })
+      .then(function() { loadMobDostRequests(); })
+      .catch(function() { showToast('Error declining request', 'error'); });
+    }
+
+    function removeMobDost(id) {
+      fetch(API_BASE + '/api/social/friends/' + id, { method: 'DELETE', headers: authHeaders() })
+      .then(function() { loadMobDostList(); addActivity('\u{1F44B}', 'Friend removed.'); showToast('Friend removed', 'info'); })
+      .catch(function() { showToast('Error removing friend', 'error'); });
+    }
+
+    // --- FAUJ (Army/Team) ---
+    function loadMobFauj() {
+      fetch(API_BASE + '/api/social/fauj/mine', { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var el = document.getElementById('mob-fauj-content');
+        if (!data.fauj) {
+          el.innerHTML = '<div class="social-empty">You are not in a Fauj yet.</div>' +
+            '<div class="input-row"><input id="mob-fauj-name" class="input-sm" placeholder="Team name..."></div>' +
+            '<button class="btn-sm btn-sm-primary" onclick="createMobFauj()" style="width:100%;">Create Fauj</button>' +
+            '<div style="margin-top:0.75rem;"><button class="btn-sm btn-sm-ghost" onclick="loadMobFaujInvites()" style="width:100%;">Check Invites</button></div>' +
+            '<div id="mob-fauj-invites" style="margin-top:0.5rem;"></div>';
+          return;
+        }
+        var fauj = data.fauj;
+        var members = fauj.members || [];
+        var isLeader = data.role === 'leader';
+        var userId = userProfile ? userProfile.id : null;
+        var html = '<div class="fauj-header"><span class="fauj-title">' + fauj.name + '</span><span class="fauj-badge">' + members.length + '/8</span></div>';
+        html += members.map(function(m) {
+          var label = m.role === 'leader' ? ' (Sardar)' : '';
+          var duelBtn = (m.user_id !== userId) ? '<button class="btn-sm btn-sm-ghost" onclick="challengeMobDwandva(\'' + m.user_id + '\')">Duel</button>' : '';
+          return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (m.display_name || 'Runner') + label + '</div><div class="social-card-sub">' + (m.zones_owned || 0) + ' zones</div></div></div><div class="social-card-actions">' + duelBtn + '</div></div>';
+        }).join('');
+        html += '<div style="margin-top:0.5rem;">';
+        if (isLeader) {
+          html += '<div class="input-row"><input id="mob-fauj-invite-id" class="input-sm" placeholder="User ID to invite..."><button class="btn-sm btn-sm-primary" onclick="inviteToMobFauj(\'' + fauj.id + '\')">Invite</button></div>';
+        }
+        html += '<button class="btn-sm btn-sm-danger" onclick="leaveMobFauj()" style="width:100%;">' + (isLeader ? 'Disband Fauj' : 'Leave Fauj') + '</button>';
+        html += '</div>';
+        el.innerHTML = html;
+      }).catch(function() { document.getElementById('mob-fauj-content').innerHTML = '<div class="social-empty">Could not load Fauj.</div>'; });
+    }
+
+    function createMobFauj() {
+      var name = document.getElementById('mob-fauj-name').value.trim();
+      if (!name) { showToast('Enter a team name', 'error'); return; }
+      fetch(API_BASE + '/api/social/fauj', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ name: name }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) { loadMobFauj(); addActivity('\u2694\uFE0F', 'Fauj "' + name + '" created!'); showToast('Fauj created!', 'success'); }
+        else { showToast(data.error || 'Failed', 'error'); }
+      }).catch(function() { showToast('Error creating Fauj', 'error'); });
+    }
+
+    function inviteToMobFauj(faujId) {
+      var userId = document.getElementById('mob-fauj-invite-id').value.trim();
+      if (!userId) { showToast('Enter a user ID', 'error'); return; }
+      fetch(API_BASE + '/api/social/fauj/' + faujId + '/invite', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ userId: userId }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) { showToast('Invite sent!', 'success'); document.getElementById('mob-fauj-invite-id').value = ''; }
+        else { showToast(data.error || 'Failed', 'error'); }
+      }).catch(function() { showToast('Error inviting user', 'error'); });
+    }
+
+    function loadMobFaujInvites() {
+      fetch(API_BASE + '/api/social/fauj/invites', { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var el = document.getElementById('mob-fauj-invites');
+        var invites = data.invites || [];
+        if (invites.length === 0) { el.innerHTML = '<div class="social-empty">No pending invites.</div>'; return; }
+        el.innerHTML = invites.map(function(inv) {
+          return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (inv.fauj_name || 'Fauj') + '</div><div class="social-card-sub">From ' + (inv.invited_by_name || 'someone') + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="respondMobInvite(\'' + inv.id + '\', true)">Join</button><button class="btn-sm btn-sm-ghost" onclick="respondMobInvite(\'' + inv.id + '\', false)">Decline</button></div></div>';
+        }).join('');
+      }).catch(function() {});
+    }
+
+    function respondMobInvite(id, accept) {
+      fetch(API_BASE + '/api/social/fauj/invites/' + id + '/respond', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ accept: accept }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) { loadMobFauj(); showToast(accept ? 'Joined Fauj!' : 'Invite declined', accept ? 'success' : 'info'); }
+        else { showToast(data.error || 'Failed', 'error'); }
+      }).catch(function() { showToast('Error responding to invite', 'error'); });
+    }
+
+    function leaveMobFauj() {
+      fetch(API_BASE + '/api/social/fauj/leave', { method: 'POST', headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) { loadMobFauj(); addActivity('\u{1F6AA}', 'Left Fauj.'); showToast('Left Fauj', 'info'); }
+        else { showToast(data.error || 'Failed', 'error'); }
+      }).catch(function() { showToast('Error leaving Fauj', 'error'); });
+    }
+
+    // --- DWANDVA (Duels) ---
+    function loadMobDwandva() {
+      fetch(API_BASE + '/api/social/duels', { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var el = document.getElementById('mob-dwandva-content');
+        var duels = data.duels || [];
+        var userId = userProfile ? userProfile.id : null;
+        if (duels.length === 0) { el.innerHTML = '<div class="social-empty">No active duels. Challenge a teammate from the Fauj tab!</div>'; return; }
+        el.innerHTML = duels.map(function(d) {
+          var isChallenger = d.challenger_id === userId;
+          var otherName = isChallenger ? (d.opponent && d.opponent.display_name || 'Opponent') : (d.challenger && d.challenger.display_name || 'Challenger');
+          var statusClass = d.status === 'accepted' ? 'duel-accepted' : 'duel-pending';
+          var statusLabel = d.status === 'accepted' ? 'Active' : 'Pending';
+          var timeLeft = '';
+          if (d.status === 'accepted' && d.expires_at) {
+            var hrs = Math.max(0, Math.round((new Date(d.expires_at) - Date.now()) / 3600000));
+            timeLeft = ' (' + hrs + 'h left)';
+          }
+          var actions = '';
+          if (d.status === 'pending' && !isChallenger) {
+            actions = '<button class="btn-sm btn-sm-primary" onclick="acceptMobDwandva(\'' + d.id + '\')">Accept</button>';
+          }
+          actions += '<button class="btn-sm btn-sm-danger" onclick="cancelMobDwandva(\'' + d.id + '\')">Cancel</button>';
+          return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">vs ' + otherName + '</div><div class="social-card-sub"><span class="duel-status ' + statusClass + '">' + statusLabel + '</span>' + timeLeft + '</div></div></div><div class="social-card-actions">' + actions + '</div></div>';
+        }).join('');
+      }).catch(function() { document.getElementById('mob-dwandva-content').innerHTML = '<div class="social-empty">Could not load duels.</div>'; });
+    }
+
+    function challengeMobDwandva(opponentId) {
+      fetch(API_BASE + '/api/social/duels/challenge', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ opponentId: opponentId }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) { switchCommunityTab('dwandva'); loadMobDwandva(); addActivity('\u2694\uFE0F', 'Duel challenge sent!'); showToast('Challenge sent!', 'success'); }
+        else { showToast(data.error || 'Failed', 'error'); }
+      }).catch(function() { showToast('Error sending challenge', 'error'); });
+    }
+
+    function acceptMobDwandva(id) {
+      fetch(API_BASE + '/api/social/duels/' + id + '/accept', { method: 'POST', headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) { loadMobDwandva(); addActivity('\u2694\uFE0F', 'Duel accepted! 48hrs on the clock.'); showToast('Duel on!', 'success'); }
+        else { showToast(data.error || 'Failed', 'error'); }
+      }).catch(function() { showToast('Error accepting duel', 'error'); });
+    }
+
+    function cancelMobDwandva(id) {
+      fetch(API_BASE + '/api/social/duels/' + id + '/cancel', { method: 'POST', headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) { loadMobDwandva(); addActivity('\u274C', 'Duel cancelled.'); showToast('Duel cancelled', 'info'); }
+        else { showToast(data.error || 'Failed', 'error'); }
+      }).catch(function() { showToast('Error cancelling duel', 'error'); });
+    }
+
+    function loadCommunity() {
+      if (!isAuthenticated || !userProfile) return;
+      loadMobDostList();
+      loadMobDostRequests();
+      loadMobFauj();
+      loadMobDwandva();
+    }
+
+    // ── Run History ──
+    function loadRunHistory() {
+      if (!isAuthenticated || !userProfile) return;
+      var userId = userProfile.id;
+      fetch(API_BASE + '/zones/user/' + userId)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var el = document.getElementById('run-history');
+        var zones = data.zones || [];
+        if (zones.length === 0) {
+          el.innerHTML = '<div style="text-align:center; color:#5a4030; padding:1rem; font-size:0.85rem;">No runs yet. Connect Strava and start running!</div>';
+          return;
+        }
+        // Show most recent 10
+        el.innerHTML = zones.slice(0, 10).map(function(z) {
+          var distKm = z.runs && z.runs.distance_km ? z.runs.distance_km : ((z.distance_m || 0) / 1000);
+          var dateStr = z.created_at ? new Date(z.created_at).toLocaleDateString() : '';
+          var areaKm2 = ((z.area_m2 || 0) / 1000000).toFixed(3);
+          return '<div class="run-history-item">' +
+            '<div class="run-dot"></div>' +
+            '<div class="run-info"><div class="run-title">' + distKm.toFixed(1) + ' km run</div><div class="run-meta">' + dateStr + '</div></div>' +
+            '<div class="run-area">' + areaKm2 + ' km\u00B2</div></div>';
+        }).join('');
+      }).catch(function() {
+        document.getElementById('run-history').innerHTML = '<div style="text-align:center; color:#5a4030; padding:1rem; font-size:0.85rem;">Could not load run history.</div>';
+      });
     }
 
     // ── Offline Detection ──
@@ -1139,14 +1450,6 @@
       if (isAuthenticated) return;
       if (sessionStorage.getItem('fomo_dismissed')) return;
       document.getElementById('fomo-card').style.display = 'block';
-    }
-
-    function closeFomo() {
-      var card = document.getElementById('fomo-card');
-      card.style.transform = 'translateY(30px)';
-      card.style.opacity = '0';
-      setTimeout(function() { card.style.display = 'none'; }, 300);
-      sessionStorage.setItem('fomo_dismissed', '1');
     }
 
     // ── Initialize Everything ──
