@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#1a0f0a">
+  <meta name="theme-color" content="#0f1923">
   <meta name="description" content="Zamindar - India's running territory game. Claim land by running.">
   <link rel="manifest" href="data:application/json,{}">
   <title>Zamindar - Territory Map</title>
@@ -16,7 +16,7 @@
     html, body { height: 100%; overflow: hidden; }
     body {
       font-family: 'Tiro Devanagari Hindi', Georgia, serif;
-      background: #1a0f0a; color: #f5e6d3;
+      background: #0f1923; color: #e0e8f0;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
     }
@@ -24,17 +24,17 @@
     /* ── Splash Screen ── */
     .splash {
       position: fixed; inset: 0; z-index: 9999;
-      background: #1a0f0a;
+      background: #0f1923;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       transition: opacity 0.6s ease, visibility 0.6s ease;
     }
     .splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-    .splash h1 { font-size: 3rem; color: #ff6b00; margin-bottom: 0.25rem; }
-    .splash p { color: #a08060; font-size: 1rem; margin-bottom: 2rem; }
+    .splash h1 { font-size: 3rem; color: #e07850; margin-bottom: 0.25rem; }
+    .splash p { color: #8899aa; font-size: 1rem; margin-bottom: 2rem; }
     .splash-loader {
       width: 40px; height: 40px;
-      border: 3px solid #3d2b1f; border-top-color: #ff6b00;
+      border: 3px solid #243447; border-top-color: #e07850;
       border-radius: 50%; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -44,6 +44,7 @@
       position: absolute; top: 0; left: 0; right: 0;
       bottom: 60px; z-index: 1;
     }
+    .leaflet-tile-pane { filter: hue-rotate(10deg) saturate(1.3) brightness(0.85); }
 
     /* ── Toast Notification ── */
     .toast-container {
@@ -53,9 +54,9 @@
       pointer-events: none;
     }
     .toast {
-      background: #2d1f14; border: 1px solid #3d2b1f;
+      background: #1a2733; border: 1px solid #243447;
       border-radius: 10px; padding: 10px 14px;
-      color: #f5e6d3; font-size: 0.85rem;
+      color: #e0e8f0; font-size: 0.85rem;
       display: flex; align-items: center; gap: 8px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
       transform: translateY(-80px); opacity: 0;
@@ -74,13 +75,13 @@
     }
     .action-btn {
       width: 44px; height: 44px; border-radius: 10px;
-      background: rgba(26,15,10,0.92); backdrop-filter: blur(8px);
-      border: 1px solid #ff6b00; color: #ff6b00;
+      background: rgba(15,25,35,0.92); backdrop-filter: blur(8px);
+      border: 1px solid #e07850; color: #e07850;
       font-size: 1.1rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.2s ease;
     }
-    .action-btn:active { background: #ff6b00; color: #1a0f0a; transform: scale(0.93); }
+    .action-btn:active { background: #e07850; color: #0f1923; transform: scale(0.93); }
     .action-btn.tracking { border-color: #2a9d8f; color: #2a9d8f; animation: pulse-border 2s infinite; }
     @keyframes pulse-border {
       0%,100% { box-shadow: 0 0 0 0 rgba(42,157,143,0.4); }
@@ -90,39 +91,39 @@
     /* ── Status Pill (top-left) ── */
     .status-pill {
       position: absolute; top: 10px; left: 10px;
-      z-index: 1000; background: rgba(26,15,10,0.92);
+      z-index: 1000; background: rgba(15,25,35,0.92);
       backdrop-filter: blur(8px);
-      border: 1px solid #3d2b1f; border-radius: 20px;
+      border: 1px solid #243447; border-radius: 20px;
       padding: 6px 12px; font-size: 0.75rem;
-      color: #a08060; display: flex; align-items: center; gap: 6px;
+      color: #8899aa; display: flex; align-items: center; gap: 6px;
     }
     .status-dot {
       width: 7px; height: 7px; border-radius: 50%;
       background: #cc3333;
     }
     .status-dot.online { background: #2a9d8f; }
-    .status-dot.connected { background: #ff6b00; }
+    .status-dot.connected { background: #e07850; }
 
     /* ── Bottom Navigation ── */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
       height: calc(60px + env(safe-area-inset-bottom));
       padding-bottom: env(safe-area-inset-bottom);
-      background: rgba(26,15,10,0.96); backdrop-filter: blur(10px);
-      border-top: 1px solid #3d2b1f;
+      background: rgba(15,25,35,0.96); backdrop-filter: blur(10px);
+      border-top: 1px solid #243447;
       display: flex; justify-content: space-around; align-items: center;
       z-index: 1000;
     }
     .nav-btn {
       display: flex; flex-direction: column; align-items: center;
-      background: none; border: none; color: #5a4030;
+      background: none; border: none; color: #4a6070;
       font-size: 0.65rem; font-family: inherit;
       cursor: pointer; padding: 6px 12px; min-width: 56px;
       transition: color 0.2s ease;
       -webkit-tap-highlight-color: transparent;
     }
     .nav-btn .icon { font-size: 1.3rem; margin-bottom: 2px; transition: transform 0.2s ease; }
-    .nav-btn.active { color: #ff6b00; }
+    .nav-btn.active { color: #e07850; }
     .nav-btn.active .icon { transform: scale(1.1); }
     .nav-btn:active .icon { transform: scale(0.9); }
 
@@ -136,7 +137,7 @@
     .sheet-backdrop.open { opacity: 1; visibility: visible; }
     .bottom-sheet {
       position: fixed; bottom: 60px; left: 0; right: 0;
-      background: #1a0f0a; border-top: 2px solid #ff6b00;
+      background: #0f1923; border-top: 2px solid #e07850;
       border-radius: 20px 20px 0 0; z-index: 1600;
       transform: translateY(100%);
       transition: transform 0.35s cubic-bezier(.4,0,.2,1);
@@ -146,20 +147,20 @@
     .sheet-handle-area { padding: 10px 0 4px; text-align: center; cursor: grab; }
     .sheet-handle {
       width: 36px; height: 4px;
-      background: #3d2b1f; border-radius: 2px;
+      background: #243447; border-radius: 2px;
       margin: 0 auto;
     }
     .sheet-tabs {
-      display: flex; border-bottom: 1px solid #2d1f14;
+      display: flex; border-bottom: 1px solid #1a2733;
       padding: 0 1rem; flex-shrink: 0;
     }
     .sheet-tab {
       flex: 1; padding: 10px 4px; text-align: center;
       background: none; border: none; border-bottom: 2px solid transparent;
-      color: #5a4030; font-family: inherit; font-size: 0.85rem;
+      color: #4a6070; font-family: inherit; font-size: 0.85rem;
       cursor: pointer; transition: all 0.2s ease;
     }
-    .sheet-tab.active { color: #ff6b00; border-bottom-color: #ff6b00; }
+    .sheet-tab.active { color: #e07850; border-bottom-color: #e07850; }
     .sheet-content {
       padding: 0.75rem 1rem 1rem;
       overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -169,27 +170,27 @@
     /* ── Leaderboard ── */
     .leaderboard-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 0.65rem 0; border-bottom: 1px solid #2d1f14;
+      padding: 0.65rem 0; border-bottom: 1px solid #1a2733;
     }
     .leaderboard-item:last-child { border: none; }
     .lb-rank {
       width: 24px; height: 24px; border-radius: 50%;
-      background: #2d1f14; color: #ff6b00;
+      background: #1a2733; color: #e07850;
       display: flex; align-items: center; justify-content: center;
       font-size: 0.7rem; font-weight: bold; flex-shrink: 0;
       margin-right: 10px;
     }
-    .lb-rank.gold { background: #ff6b00; color: #1a0f0a; }
-    .lb-rank.silver { background: #a08060; color: #1a0f0a; }
-    .lb-rank.bronze { background: #6b4c30; color: #f5e6d3; }
+    .lb-rank.gold { background: #e07850; color: #0f1923; }
+    .lb-rank.silver { background: #8899aa; color: #0f1923; }
+    .lb-rank.bronze { background: #4a6a80; color: #e0e8f0; }
     .lb-info { flex: 1; min-width: 0; }
-    .runner-name { color: #f5e6d3; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .runner-city { color: #5a4030; font-size: 0.72rem; }
-    .runner-score { color: #ff6b00; font-weight: bold; font-size: 0.85rem; white-space: nowrap; }
+    .runner-name { color: #e0e8f0; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .runner-city { color: #4a6070; font-size: 0.72rem; }
+    .runner-score { color: #e07850; font-weight: bold; font-size: 0.85rem; white-space: nowrap; }
 
     /* ── Skeleton loading ── */
     .skeleton {
-      background: linear-gradient(90deg, #2d1f14 25%, #3d2b1f 50%, #2d1f14 75%);
+      background: linear-gradient(90deg, #1a2733 25%, #243447 50%, #1a2733 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
       border-radius: 6px;
@@ -200,47 +201,37 @@
     .skeleton-line { height: 14px; flex: 1; border-radius: 4px; }
     .skeleton-short { height: 14px; width: 50px; border-radius: 4px; }
 
-    /* ── Activity Feed ── */
-    .activity-item {
-      padding: 0.55rem 0; font-size: 0.82rem;
-      color: #a08060; border-bottom: 1px solid #2d1f14;
-      display: flex; align-items: flex-start; gap: 8px;
-    }
-    .activity-item:last-child { border: none; }
-    .activity-icon { font-size: 1rem; flex-shrink: 0; }
-    .activity-text { flex: 1; }
-    .activity-time { color: #5a4030; font-size: 0.7rem; flex-shrink: 0; }
 
     /* ── FOMO Card ── */
     .fomo-card {
       position: fixed; bottom: 70px; left: 10px; right: 10px;
-      background: linear-gradient(135deg, #2d1f14, #1a0f0a);
-      border: 1px solid #ff6b00; border-radius: 14px;
+      background: linear-gradient(135deg, #1a2733, #0f1923);
+      border: 1px solid #e07850; border-radius: 14px;
       padding: 1rem 1rem 0.75rem; z-index: 1400;
       display: none; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
       animation: slideUp 0.4s cubic-bezier(.4,0,.2,1);
     }
     @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .fomo-card h4 { color: #ff6b00; font-size: 0.95rem; }
-    .fomo-card p { color: #a08060; font-size: 0.8rem; margin: 0.25rem 0; }
+    .fomo-card h4 { color: #e07850; font-size: 0.95rem; }
+    .fomo-card p { color: #8899aa; font-size: 0.8rem; margin: 0.25rem 0; }
     .fomo-close {
       position: absolute; top: 8px; right: 12px;
-      background: none; border: none; color: #5a4030;
+      background: none; border: none; color: #4a6070;
       font-size: 1.4rem; cursor: pointer; padding: 4px;
     }
     .fomo-dismiss {
-      color: #5a4030; font-size: 0.72rem;
+      color: #4a6070; font-size: 0.72rem;
       background: none; border: none; margin-top: 0.4rem; cursor: pointer;
     }
 
     /* ── Strava Connect Button ── */
     .btn-strava {
       display: block; width: 100%; padding: 13px;
-      background: linear-gradient(135deg, #fc4c02, #e04400);
+      background: linear-gradient(135deg, #d06a45, #b85a3a);
       color: white; border: none; border-radius: 10px;
       font-size: 1rem; cursor: pointer; font-family: inherit;
       margin-top: 0.5rem; font-weight: bold;
-      box-shadow: 0 4px 15px rgba(252,76,2,0.3);
+      box-shadow: 0 4px 15px rgba(208,106,69,0.3);
       transition: transform 0.15s ease;
     }
     .btn-strava:active { transform: scale(0.97); }
@@ -248,96 +239,121 @@
     /* ── Profile Screen ── */
     .profile-screen {
       position: fixed; inset: 0; bottom: 60px;
-      background: #1a0f0a; z-index: 1400;
+      background: #0f1923; z-index: 1400;
       overflow-y: auto; -webkit-overflow-scrolling: touch;
       transform: translateX(100%);
       transition: transform 0.35s cubic-bezier(.4,0,.2,1);
     }
     .profile-screen.open { transform: translateX(0); }
     .profile-header {
-      padding: 1.5rem 1rem 1rem;
-      background: linear-gradient(180deg, #2d1f14 0%, #1a0f0a 100%);
-      text-align: center; position: relative;
+      padding: 1.25rem 1rem 0.75rem;
+      background: linear-gradient(180deg, #1a2733 0%, #0f1923 100%);
+      position: relative;
     }
     .profile-back {
       position: absolute; top: 1rem; left: 1rem;
-      background: none; border: none; color: #ff6b00;
+      background: none; border: none; color: #e07850;
       font-size: 1.5rem; cursor: pointer;
     }
+    .profile-top-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding-left: 2rem;
+    }
     .profile-avatar {
-      width: 72px; height: 72px; border-radius: 50%;
-      border: 3px solid #ff6b00; margin: 0 auto 0.5rem;
-      background: #2d1f14; display: flex;
+      width: 52px; height: 52px; border-radius: 50%;
+      border: 3px solid #e07850; flex-shrink: 0;
+      background: #1a2733; display: flex;
       align-items: center; justify-content: center;
-      font-size: 2rem; color: #ff6b00; overflow: hidden;
+      font-size: 1.5rem; color: #e07850; overflow: hidden;
     }
     .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .profile-name { font-size: 1.3rem; color: #f5e6d3; }
-    .profile-subtitle { font-size: 0.8rem; color: #5a4030; }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name { font-size: 1.15rem; color: #e0e8f0; font-weight: bold; }
+    .profile-subtitle { font-size: 0.78rem; color: #e07850; }
+    .profile-rank-badge {
+      text-align: right; flex-shrink: 0;
+    }
+    .profile-rank-num { font-size: 1.3rem; color: #e0e8f0; font-weight: bold; }
+    .profile-rank-label { font-size: 0.65rem; color: #4a6070; text-transform: uppercase; letter-spacing: 0.5px; }
     .profile-stats {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 1px; background: #2d1f14; margin: 1rem 0;
-      border-radius: 12px; overflow: hidden;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: #243447; margin: 0.75rem 0 0;
+      border-radius: 10px; overflow: hidden;
     }
     .stat-card {
-      background: #1a0f0a; padding: 0.8rem 0.5rem; text-align: center;
+      background: #0f1923; padding: 0.65rem 0.3rem; text-align: center;
     }
-    .stat-value { font-size: 1.4rem; color: #ff6b00; font-weight: bold; }
-    .stat-label { font-size: 0.7rem; color: #5a4030; margin-top: 2px; }
+    .stat-value { font-size: 1.3rem; color: #e0e8f0; font-weight: bold; }
+    .stat-label { font-size: 0.65rem; color: #4a6070; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
     .profile-section {
-      padding: 1rem; border-top: 1px solid #2d1f14;
+      padding: 1rem; border-top: 1px solid #1a2733;
     }
-    .profile-section h3 { color: #ff8533; font-size: 0.95rem; margin-bottom: 0.6rem; }
+    .profile-section h3 { color: #e89070; font-size: 0.95rem; margin-bottom: 0.6rem; }
     /* ── Social / Community ── */
     .community-tabs {
-      display: flex; gap: 0; border-bottom: 1px solid #3d2b1f; margin-bottom: 0.75rem;
+      display: flex; gap: 0; border-bottom: 1px solid #243447; margin-bottom: 0.75rem;
     }
     .community-tab {
       flex: 1; padding: 0.6rem 0; text-align: center; font-size: 0.82rem;
-      color: #5a4030; background: none; border: none;
+      color: #4a6070; background: none; border: none;
       border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit;
     }
-    .community-tab.active { color: #ff6b00; border-bottom-color: #ff6b00; }
+    .community-tab.active { color: #e07850; border-bottom-color: #e07850; }
     .social-card {
-      background: #2d1f14; border-radius: 8px; padding: 0.6rem 0.75rem;
+      background: #1a2733; border-radius: 8px; padding: 0.6rem 0.75rem;
       margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;
     }
     .social-card-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; flex: 1; }
-    .social-card-name { color: #f5e6d3; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .social-card-sub { color: #5a4030; font-size: 0.7rem; }
+    .social-card-name { color: #e0e8f0; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .social-card-sub { color: #4a6070; font-size: 0.7rem; }
     .social-card-actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
     .btn-sm { padding: 0.35rem 0.6rem; font-size: 0.72rem; border-radius: 6px; cursor: pointer; font-family: inherit; border: none; }
-    .btn-sm-primary { background: #ff6b00; color: #fff; }
-    .btn-sm-primary:active { background: #e04400; }
-    .btn-sm-ghost { background: none; color: #a08060; border: 1px solid #3d2b1f; }
-    .btn-sm-ghost:active { background: #3d2b1f; }
+    .btn-sm-primary { background: #e07850; color: #fff; }
+    .btn-sm-primary:active { background: #c06040; }
+    .btn-sm-ghost { background: none; color: #8899aa; border: 1px solid #243447; }
+    .btn-sm-ghost:active { background: #243447; }
     .btn-sm-danger { background: none; color: #cc4444; border: 1px solid #cc4444; }
     .btn-sm-danger:active { background: #cc4444; color: #fff; }
-    .social-empty { color: #5a4030; font-size: 0.82rem; text-align: center; padding: 1rem 0; }
+    .social-empty { color: #4a6070; font-size: 0.82rem; text-align: center; padding: 1rem 0; }
     .fauj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
-    .fauj-title { color: #ff8533; font-size: 1rem; font-weight: bold; }
-    .fauj-badge { display: inline-block; background: #ff6b00; color: #1a0f0a; font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: bold; }
+    .fauj-title { color: #e89070; font-size: 1rem; font-weight: bold; }
+    .fauj-badge { display: inline-block; background: #e07850; color: #0f1923; font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: bold; }
     .duel-status { font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 10px; }
-    .duel-pending { background: #5a3e2e; color: #e9c46a; }
+    .duel-pending { background: #3a5060; color: #e9c46a; }
     .duel-accepted { background: #2a4d3e; color: #2a9d8f; }
     .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
     .input-sm {
-      flex: 1; padding: 0.45rem 0.6rem; background: #2d1f14;
-      border: 1px solid #3d2b1f; border-radius: 6px; color: #f5e6d3;
+      flex: 1; padding: 0.45rem 0.6rem; background: #1a2733;
+      border: 1px solid #243447; border-radius: 6px; color: #e0e8f0;
       font-size: 0.82rem; font-family: inherit;
     }
-    .input-sm::placeholder { color: #5a3e2e; }
+    .input-sm::placeholder { color: #3a5060; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+    /* ── Filter Chips ── */
+    .filter-chips {
+      display: flex; gap: 6px; padding: 0.5rem 0;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; flex-shrink: 0;
+    }
+    .filter-chips::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      padding: 0.35rem 0.75rem; border-radius: 16px;
+      background: #1a2733; border: 1px solid #243447;
+      color: #8899aa; font-size: 0.75rem; font-family: inherit;
+      white-space: nowrap; cursor: pointer; transition: all 0.2s;
+    }
+    .filter-chip.active { background: #e07850; border-color: #e07850; color: #0f1923; }
+    .filter-chip:active { transform: scale(0.95); }
     .run-history-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 0.6rem 0; border-bottom: 1px solid #2d1f14;
+      padding: 0.6rem 0; border-bottom: 1px solid #1a2733;
     }
-    .run-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff6b00; flex-shrink: 0; }
+    .run-dot { width: 8px; height: 8px; border-radius: 50%; background: #e07850; flex-shrink: 0; }
     .run-info { flex: 1; }
-    .run-title { color: #f5e6d3; font-size: 0.85rem; }
-    .run-meta { color: #5a4030; font-size: 0.72rem; }
-    .run-area { color: #ff6b00; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+    .run-title { color: #e0e8f0; font-size: 0.85rem; }
+    .run-meta { color: #4a6070; font-size: 0.72rem; }
+    .run-area { color: #e07850; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
     .profile-cta {
       padding: 1.5rem 1rem;
       text-align: center;
@@ -353,53 +369,53 @@
     }
     .tutorial-overlay.show { display: flex; }
     .tutorial-card {
-      background: #1a0f0a; border: 1px solid #ff6b00;
+      background: #0f1923; border: 1px solid #e07850;
       border-radius: 16px; padding: 1.5rem;
       text-align: center; max-width: 300px; width: 100%;
     }
-    .tutorial-step { font-size: 0.75rem; color: #5a4030; margin-bottom: 0.5rem; }
+    .tutorial-step { font-size: 0.75rem; color: #4a6070; margin-bottom: 0.5rem; }
     .tutorial-icon { font-size: 3rem; margin-bottom: 0.5rem; }
-    .tutorial-card h3 { color: #ff6b00; font-size: 1.1rem; margin-bottom: 0.5rem; }
-    .tutorial-card p { color: #a08060; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1rem; }
+    .tutorial-card h3 { color: #e07850; font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .tutorial-card p { color: #8899aa; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1rem; }
     .tutorial-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 1rem; }
-    .tutorial-dot { width: 8px; height: 8px; border-radius: 50%; background: #3d2b1f; }
-    .tutorial-dot.active { background: #ff6b00; }
+    .tutorial-dot { width: 8px; height: 8px; border-radius: 50%; background: #243447; }
+    .tutorial-dot.active { background: #e07850; }
     .tutorial-btn {
       padding: 10px 24px; border: none; border-radius: 8px;
-      background: #ff6b00; color: #1a0f0a; font-family: inherit;
+      background: #e07850; color: #0f1923; font-family: inherit;
       font-size: 0.9rem; font-weight: bold; cursor: pointer;
     }
     .tutorial-skip {
-      background: none; border: none; color: #5a4030;
+      background: none; border: none; color: #4a6070;
       font-size: 0.75rem; cursor: pointer; margin-top: 0.75rem;
     }
 
     /* ── City/Territory Popups ── */
     .leaflet-popup-content-wrapper {
-      background: #1a0f0a; color: #f5e6d3;
-      border: 1px solid #3d2b1f; border-radius: 12px;
+      background: #0f1923; color: #e0e8f0;
+      border: 1px solid #243447; border-radius: 12px;
       box-shadow: 0 6px 24px rgba(0,0,0,0.5);
     }
-    .leaflet-popup-tip { background: #1a0f0a; }
+    .leaflet-popup-tip { background: #0f1923; }
     .leaflet-popup-close-button {
-      color: #5a4030 !important; font-size: 20px !important;
+      color: #4a6070 !important; font-size: 20px !important;
       width: 28px !important; height: 28px !important;
     }
-    .popup-content h4 { color: #ff6b00; font-size: 0.95rem; margin-bottom: 4px; }
-    .popup-content p { font-size: 0.82rem; margin: 3px 0; color: #a08060; }
+    .popup-content h4 { color: #e07850; font-size: 0.95rem; margin-bottom: 4px; }
+    .popup-content p { font-size: 0.82rem; margin: 3px 0; color: #8899aa; }
     .popup-content .siege { color: #e63946; font-weight: bold; }
     .popup-content .tag {
-      display: inline-block; background: #2d1f14;
+      display: inline-block; background: #1a2733;
       border-radius: 4px; padding: 2px 6px;
-      font-size: 0.7rem; color: #ff6b00; margin-top: 4px;
+      font-size: 0.7rem; color: #e07850; margin-top: 4px;
     }
 
     /* ── City Markers ── */
     .city-marker {
-      background: rgba(26,15,10,0.9); border: 2px solid #ff6b00;
+      background: rgba(15,25,35,0.9); border: 2px solid #e07850;
       border-radius: 50%; width: 32px; height: 32px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 12px; color: #ff6b00; font-weight: bold;
+      font-size: 12px; color: #e07850; font-weight: bold;
       box-shadow: 0 2px 8px rgba(0,0,0,0.4);
       transition: transform 0.2s ease;
     }
@@ -419,9 +435,9 @@
 
     /* ── Leaflet overrides ── */
     .leaflet-control-zoom a {
-      background: rgba(26,15,10,0.92) !important;
-      color: #ff6b00 !important;
-      border-color: #3d2b1f !important;
+      background: rgba(15,25,35,0.92) !important;
+      color: #e07850 !important;
+      border-color: #243447 !important;
     }
     .leaflet-control-attribution { display: none !important; }
   </style>
@@ -498,22 +514,20 @@
     </div>
     <div class="sheet-tabs">
       <button class="sheet-tab active" data-tab="leaderboard" onclick="switchTab('leaderboard')">Zamindars</button>
-      <button class="sheet-tab" data-tab="activity" onclick="switchTab('activity')">Hukumnama</button>
+
       <button class="sheet-tab" data-tab="cities" onclick="switchTab('cities')">Cities</button>
     </div>
     <div class="sheet-content" id="sheet-leaderboard">
+      <div class="filter-chips" id="territory-filters">
+        <button class="filter-chip active" onclick="filterTerritories('all')">All zones</button>
+        <button class="filter-chip" onclick="filterTerritories('mine')">My territory</button>
+        <button class="filter-chip" onclick="filterTerritories('army')">Army</button>
+        <button class="filter-chip" onclick="filterTerritories('contested')">Contested</button>
+      </div>
       <div id="leaderboard">
         <div class="skeleton-row"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-short"></div></div>
         <div class="skeleton-row"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-short"></div></div>
         <div class="skeleton-row"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-short"></div></div>
-      </div>
-    </div>
-    <div class="sheet-content" id="sheet-activity" style="display:none;">
-      <div id="activity-log">
-        <div class="activity-item">
-          <span class="activity-icon">&#9203;</span>
-          <span class="activity-text">Waiting for activity...</span>
-        </div>
       </div>
     </div>
     <div class="sheet-content" id="sheet-cities" style="display:none;">
@@ -569,35 +583,47 @@
   <div class="profile-screen" id="profile-screen">
     <div class="profile-header">
       <button class="profile-back" onclick="switchScreen('map')">&larr;</button>
-      <div class="profile-avatar" id="profile-avatar">&#x1F3C3;</div>
-      <div class="profile-name" id="profile-name">Runner</div>
-      <div class="profile-subtitle" id="profile-subtitle">Log in to see your stats</div>
-    </div>
-    <div class="profile-stats">
-      <div class="stat-card">
-        <div class="stat-value" id="stat-distance">0</div>
-        <div class="stat-label">km run</div>
+      <div class="profile-top-row">
+        <div class="profile-avatar" id="profile-avatar">&#x1F3C3;</div>
+        <div class="profile-info">
+          <div class="profile-name" id="profile-name">Runner</div>
+          <div class="profile-subtitle" id="profile-subtitle">Log in to see your stats</div>
+        </div>
+        <div class="profile-rank-badge">
+          <div class="profile-rank-num" id="stat-rank">-</div>
+          <div class="profile-rank-label">Rank</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-territories">0</div>
-        <div class="stat-label">territories</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-rank">-</div>
-        <div class="stat-label">rank</div>
+      <div class="profile-stats">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-zones">0</div>
+          <div class="stat-label">Zones</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-cities">0</div>
+          <div class="stat-label">Cities</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-streak">0d</div>
+          <div class="stat-label">Streak</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-runs">0</div>
+          <div class="stat-label">Runs</div>
+        </div>
       </div>
     </div>
     <div class="profile-section">
       <h3>Recent Runs</h3>
       <div id="run-history">
-        <div style="text-align:center; color:#5a4030; padding:1rem; font-size:0.85rem;">
+        <div style="text-align:center; color:#4a6070; padding:1rem; font-size:0.85rem;">
           Log in to see your run history
         </div>
       </div>
     </div>
     <div class="profile-cta" id="profile-cta">
       <button class="btn-strava" onclick="window.location.href='/'">Log In / Sign Up</button>
-      <button class="btn-secondary" onclick="handleConnect()" style="margin-top:0.5rem; display:block; width:100%; padding:0.8rem; background:#3d2b1f; color:#f5e6d3; border:1px solid #5a3e2e; border-radius:6px; font-size:0.9rem; cursor:pointer; font-family:inherit;">Sign up with Strava</button>
+      <button class="btn-secondary" onclick="handleConnect()" style="margin-top:0.5rem; display:block; width:100%; padding:0.8rem; background:#243447; color:#e0e8f0; border:1px solid #3a5060; border-radius:6px; font-size:0.9rem; cursor:pointer; font-family:inherit;">Sign up with Strava</button>
     </div>
   </div>
 
@@ -639,7 +665,7 @@
     var isAuthenticated = false;
     var userProfile = null;
     var tutorialStep = 0;
-    var activityLog = [];
+
 
     // ── Tutorial Data ──
     var tutorialSteps = [
@@ -732,8 +758,10 @@
         if (userProfile.avatar_url) {
           document.getElementById('profile-avatar').innerHTML = '<img src="' + userProfile.avatar_url + '" alt="avatar">';
         }
-        document.getElementById('stat-distance').textContent = (userProfile.total_distance_km || 0).toFixed(1);
-        document.getElementById('stat-territories').textContent = userProfile.zones_owned || 0;
+        document.getElementById('stat-zones').textContent = userProfile.zones_owned || 0;
+        document.getElementById('stat-cities').textContent = userProfile.cities_owned || 0;
+        document.getElementById('stat-streak').textContent = (userProfile.streak_days || 0) + 'd';
+        document.getElementById('stat-runs').textContent = userProfile.total_runs || 0;
         cta.style.display = userProfile.stravaConnected ? 'none' : 'block';
         // When logged in but Strava not connected, show link Strava CTA
         if (!userProfile.stravaConnected) {
@@ -759,7 +787,11 @@
         var data = await res.json();
         territoryLayer.clearLayers();
         if (data.territories && data.territories.length > 0) {
+          var userId = (userProfile && userProfile.strava_id) || null;
           data.territories.forEach(function(t) {
+            // Apply filter
+            if (currentFilter === 'mine' && t.runner_id !== userId) return;
+            if (currentFilter === 'contested' && !t.contested) return;
             if (t.geojson) {
               var color = getRunnerColor(t.runner_id || 'default');
               var layer = L.geoJSON(t.geojson, {
@@ -814,7 +846,7 @@
                 '<h4>' + c.name + '</h4>' +
                 '<p>' + (c.state || '') + '</p>' +
                 '<p>' + c.multiplier + 'x multiplier \u2022 ' + (c.capture_radius_km || c.capture_radius_m/1000 || 15) + 'km radius</p>' +
-                (c.zamindar ? '<p style="color:#2a9d8f">\u{1F451} Zamindar: ' + c.zamindar + '</p>' : '<p style="color:#ff6b00">Unclaimed!</p>') +
+                (c.zamindar ? '<p style="color:#2a9d8f">\u{1F451} Zamindar: ' + c.zamindar + '</p>' : '<p style="color:#e07850">Unclaimed!</p>') +
                 '</div>'
               ).addTo(cityLayer);
           });
@@ -828,7 +860,7 @@
     function updateCityList(cities) {
       var el = document.getElementById('city-list');
       if (!cities || cities.length === 0) {
-        el.innerHTML = '<div style="text-align:center;color:#5a4030;padding:1rem;font-size:0.85rem;">No cities loaded</div>';
+        el.innerHTML = '<div style="text-align:center;color:#4a6070;padding:1rem;font-size:0.85rem;">No cities loaded</div>';
         return;
       }
       el.innerHTML = cities.map(function(c) {
@@ -862,14 +894,14 @@
           }
         } else {
           el.innerHTML = '<div style="text-align:center;padding:1.5rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">\u{1F3C6}</div>' +
-            '<div style="color:#a08060;font-size:0.9rem;">No runners yet</div>' +
-            '<div style="color:#5a4030;font-size:0.8rem;margin-top:0.25rem;">Be the first Zamindar!</div></div>';
+            '<div style="color:#8899aa;font-size:0.9rem;">No runners yet</div>' +
+            '<div style="color:#4a6070;font-size:0.8rem;margin-top:0.25rem;">Be the first Zamindar!</div></div>';
         }
       } catch (e) {
         var el = document.getElementById('leaderboard');
         el.innerHTML = '<div style="text-align:center;padding:1.5rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">\u{1F3C3}</div>' +
-          '<div style="color:#a08060;font-size:0.9rem;">Connect Strava to start</div>' +
-          '<div style="color:#5a4030;font-size:0.8rem;margin-top:0.25rem;">Your runs will appear here</div></div>';
+          '<div style="color:#8899aa;font-size:0.9rem;">Connect Strava to start</div>' +
+          '<div style="color:#4a6070;font-size:0.8rem;margin-top:0.25rem;">Your runs will appear here</div></div>';
       }
     }
 
@@ -934,7 +966,7 @@
       if (userMarker) map.removeLayer(userMarker);
       var icon = L.divIcon({
         className: '',
-        html: '<div style="width:16px;height:16px;background:#ff6b00;border:3px solid #f5e6d3;border-radius:50%;box-shadow:0 0 10px rgba(255,107,0,0.6);"></div>',
+        html: '<div style="width:16px;height:16px;background:#e07850;border:3px solid #e0e8f0;border-radius:50%;box-shadow:0 0 10px rgba(224,120,80,0.6);"></div>',
         iconSize: [16, 16], iconAnchor: [8, 8]
       });
       userMarker = L.marker([lat, lng], { icon: icon }).addTo(map);
@@ -998,7 +1030,7 @@
       pts.push(pts[0]);
 
       var polygon = L.polygon(pts, {
-        color: '#ff6b00', fillColor: '#ff6b00',
+        color: '#e07850', fillColor: '#e07850',
         fillOpacity: 0.2, weight: 2
       }).addTo(territoryLayer);
 
@@ -1021,31 +1053,10 @@
         }
       }, 40);
 
-      addActivity('\u{1F3C3}', 'You simulated a territory claim!');
+
       showToast('Territory simulated!', 'success', 2000);
     }
 
-    // ── Activity Log ──
-    function addActivity(icon, text) {
-      var now = new Date();
-      var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-      activityLog.unshift({ icon: icon, text: text, time: timeStr });
-      if (activityLog.length > 50) activityLog.pop();
-      renderActivity();
-    }
-
-    function renderActivity() {
-      var el = document.getElementById('activity-log');
-      if (activityLog.length === 0) {
-        el.innerHTML = '<div class="activity-item"><span class="activity-icon">\u23F3</span><span class="activity-text">Waiting for activity...</span></div>';
-        return;
-      }
-      el.innerHTML = activityLog.map(function(a) {
-        return '<div class="activity-item"><span class="activity-icon">' + a.icon + '</span>' +
-          '<span class="activity-text">' + a.text + '</span>' +
-          '<span class="activity-time">' + a.time + '</span></div>';
-      }).join('');
-    }
 
     // ── Bottom Sheet ──
     function toggleSheet() {
@@ -1065,8 +1076,18 @@
       document.querySelectorAll('.sheet-tab').forEach(function(t) { t.classList.remove('active'); });
       document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
       document.getElementById('sheet-leaderboard').style.display = tab === 'leaderboard' ? 'block' : 'none';
-      document.getElementById('sheet-activity').style.display = tab === 'activity' ? 'block' : 'none';
+
       document.getElementById('sheet-cities').style.display = tab === 'cities' ? 'block' : 'none';
+    }
+
+    // ── Territory Filter Chips ──
+    var currentFilter = 'all';
+    function filterTerritories(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+      document.querySelector('[onclick="filterTerritories(\'' + filter + '\')"]').classList.add('active');
+      // Re-render territories with filter
+      loadTerritories();
     }
 
     // ── Tutorial ──
@@ -1162,7 +1183,7 @@
 
     function acceptMobDost(id) {
       fetch(API_BASE + '/api/social/friends/' + id + '/accept', { method: 'POST', headers: authHeaders() })
-      .then(function() { loadMobDostList(); loadMobDostRequests(); addActivity('\u{1F91D}', 'Friend request accepted!'); showToast('Friend added!', 'success'); })
+      .then(function() { loadMobDostList(); loadMobDostRequests(); showToast('Friend added!', 'success'); })
       .catch(function() { showToast('Error accepting request', 'error'); });
     }
 
@@ -1174,7 +1195,7 @@
 
     function removeMobDost(id) {
       fetch(API_BASE + '/api/social/friends/' + id, { method: 'DELETE', headers: authHeaders() })
-      .then(function() { loadMobDostList(); addActivity('\u{1F44B}', 'Friend removed.'); showToast('Friend removed', 'info'); })
+      .then(function() { loadMobDostList(); showToast('Friend removed', 'info'); })
       .catch(function() { showToast('Error removing friend', 'error'); });
     }
 
@@ -1218,7 +1239,7 @@
       fetch(API_BASE + '/api/social/fauj', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ name: name }) })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.success) { loadMobFauj(); addActivity('\u2694\uFE0F', 'Fauj "' + name + '" created!'); showToast('Fauj created!', 'success'); }
+        if (data.success) { loadMobFauj(); showToast('Fauj created!', 'success'); }
         else { showToast(data.error || 'Failed', 'error'); }
       }).catch(function() { showToast('Error creating Fauj', 'error'); });
     }
@@ -1260,7 +1281,7 @@
       fetch(API_BASE + '/api/social/fauj/leave', { method: 'POST', headers: authHeaders() })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.success) { loadMobFauj(); addActivity('\u{1F6AA}', 'Left Fauj.'); showToast('Left Fauj', 'info'); }
+        if (data.success) { loadMobFauj(); showToast('Left Fauj', 'info'); }
         else { showToast(data.error || 'Failed', 'error'); }
       }).catch(function() { showToast('Error leaving Fauj', 'error'); });
     }
@@ -1298,7 +1319,7 @@
       fetch(API_BASE + '/api/social/duels/challenge', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ opponentId: opponentId }) })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.success) { switchCommunityTab('dwandva'); loadMobDwandva(); addActivity('\u2694\uFE0F', 'Duel challenge sent!'); showToast('Challenge sent!', 'success'); }
+        if (data.success) { switchCommunityTab('dwandva'); loadMobDwandva(); showToast('Challenge sent!', 'success'); }
         else { showToast(data.error || 'Failed', 'error'); }
       }).catch(function() { showToast('Error sending challenge', 'error'); });
     }
@@ -1307,7 +1328,7 @@
       fetch(API_BASE + '/api/social/duels/' + id + '/accept', { method: 'POST', headers: authHeaders() })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.success) { loadMobDwandva(); addActivity('\u2694\uFE0F', 'Duel accepted! 48hrs on the clock.'); showToast('Duel on!', 'success'); }
+        if (data.success) { loadMobDwandva(); showToast('Duel on!', 'success'); }
         else { showToast(data.error || 'Failed', 'error'); }
       }).catch(function() { showToast('Error accepting duel', 'error'); });
     }
@@ -1316,7 +1337,7 @@
       fetch(API_BASE + '/api/social/duels/' + id + '/cancel', { method: 'POST', headers: authHeaders() })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.success) { loadMobDwandva(); addActivity('\u274C', 'Duel cancelled.'); showToast('Duel cancelled', 'info'); }
+        if (data.success) { loadMobDwandva(); showToast('Duel cancelled', 'info'); }
         else { showToast(data.error || 'Failed', 'error'); }
       }).catch(function() { showToast('Error cancelling duel', 'error'); });
     }
@@ -1339,7 +1360,7 @@
         var el = document.getElementById('run-history');
         var zones = data.zones || [];
         if (zones.length === 0) {
-          el.innerHTML = '<div style="text-align:center; color:#5a4030; padding:1rem; font-size:0.85rem;">No runs yet. Connect Strava and start running!</div>';
+          el.innerHTML = '<div style="text-align:center; color:#4a6070; padding:1rem; font-size:0.85rem;">No runs yet. Connect Strava and start running!</div>';
           return;
         }
         // Show most recent 10
@@ -1353,7 +1374,7 @@
             '<div class="run-area">' + areaKm2 + ' km\u00B2</div></div>';
         }).join('');
       }).catch(function() {
-        document.getElementById('run-history').innerHTML = '<div style="text-align:center; color:#5a4030; padding:1rem; font-size:0.85rem;">Could not load run history.</div>';
+        document.getElementById('run-history').innerHTML = '<div style="text-align:center; color:#4a6070; padding:1rem; font-size:0.85rem;">Could not load run history.</div>';
       });
     }
 
@@ -1475,7 +1496,7 @@
         loadLeaderboard();
       }, 60000);
 
-      addActivity('\u{1F30D}', 'Map loaded');
+
     }
 
     init();
