@@ -50,6 +50,35 @@
         .confirm-box p { color: #a08060; font-size: 0.9rem; margin-bottom: 1rem; }
         .confirm-box .btn-row { display: flex; gap: 0.5rem; }
         .confirm-box .btn-row button { flex: 1; }
+        /* Community (Biradari) */
+        .community-tabs { display: flex; gap: 0; border-bottom: 1px solid #3d2b1f; margin-bottom: 0.75rem; }
+        .community-tab { flex: 1; padding: 0.5rem 0; text-align: center; font-size: 0.8rem; color: #6a5040; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit; }
+        .community-tab.active { color: #ff6b00; border-bottom-color: #ff6b00; }
+        .community-tab:hover { color: #ff8533; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .social-card { background: #2d1f14; border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
+        .social-card-info { display: flex; align-items: center; gap: 0.5rem; }
+        .social-card-name { color: #f5e6d3; font-size: 0.85rem; }
+        .social-card-sub { color: #6a5040; font-size: 0.7rem; }
+        .social-card-actions { display: flex; gap: 0.25rem; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-family: inherit; border: none; }
+        .btn-sm-primary { background: #ff6b00; color: #fff; }
+        .btn-sm-primary:hover { background: #e04400; }
+        .btn-sm-ghost { background: none; color: #a08060; border: 1px solid #3d2b1f; }
+        .btn-sm-ghost:hover { background: #3d2b1f; }
+        .btn-sm-danger { background: none; color: #cc4444; border: 1px solid #cc4444; }
+        .btn-sm-danger:hover { background: #cc4444; color: #fff; }
+        .social-empty { color: #6a5040; font-size: 0.8rem; text-align: center; padding: 1rem 0; }
+        .fauj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+        .fauj-title { color: #ff8533; font-size: 1rem; font-weight: bold; }
+        .fauj-badge { display: inline-block; background: #ff6b00; color: #1a0f0a; font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 10px; font-weight: bold; }
+        .duel-status { font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 10px; }
+        .duel-pending { background: #5a3e2e; color: #e9c46a; }
+        .duel-accepted { background: #2a4d3e; color: #2a9d8f; }
+        .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .input-sm { flex: 1; padding: 0.4rem 0.6rem; background: #2d1f14; border: 1px solid #3d2b1f; border-radius: 4px; color: #f5e6d3; font-size: 0.8rem; font-family: inherit; }
+        .input-sm::placeholder { color: #5a3e2e; }
     </style>
 </head>
 <body>
@@ -91,6 +120,30 @@
         <h3>Hukumnama (Activity)</h3>
         <div id="activity-log" class="activity-log">
             <div class="activity-item">Waiting for activity...</div>
+        </div>
+    </div>
+    <div class="panel-section" id="community-section" style="display:none;">
+        <h3>Biradari (Community)</h3>
+        <div class="community-tabs">
+            <button class="community-tab active" onclick="switchTab('dost')">Dost</button>
+            <button class="community-tab" onclick="switchTab('fauj')">Fauj</button>
+            <button class="community-tab" onclick="switchTab('dwandva')">Dwandva</button>
+        </div>
+        <!-- DOST (Friends) Tab -->
+        <div class="tab-content active" id="tab-dost">
+            <div id="dost-list"><div class="social-empty">Loading...</div></div>
+            <div style="margin-top:0.5rem;">
+                <button class="btn-sm btn-sm-ghost" onclick="toggleDostRequests()" style="width:100%; margin-bottom:0.5rem;">Pending Requests <span id="dost-req-count"></span></button>
+                <div id="dost-requests" style="display:none;"></div>
+            </div>
+        </div>
+        <!-- FAUJ (Army) Tab -->
+        <div class="tab-content" id="tab-fauj">
+            <div id="fauj-content"><div class="social-empty">Loading...</div></div>
+        </div>
+        <!-- DWANDVA (Duel) Tab -->
+        <div class="tab-content" id="tab-dwandva">
+            <div id="dwandva-content"><div class="social-empty">Loading...</div></div>
         </div>
     </div>
     <div class="panel-section">
@@ -191,6 +244,7 @@ function showLoggedIn(user) {
         document.getElementById('btn-connect-strava').style.display = 'block';
         document.getElementById('btn-disconnect-strava').style.display = 'none';
     }
+    if (typeof loadCommunity === 'function') { loadCommunity(); }
 }
 
 function clearAuth() {
@@ -342,6 +396,219 @@ function addActivity(text) {
 }
 
 function closeFomo() { document.getElementById('fomo-banner').style.display = 'none'; }
+
+// ─── Biradari (Community) ───────────────────────────────────────────────────
+
+function authHeaders() { return { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' }; }
+
+function switchTab(tab) {
+    document.querySelectorAll('.community-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelector('[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function toggleDostRequests() {
+    var el = document.getElementById('dost-requests');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// --- DOST ---
+function loadDostList() {
+    fetch(API_BASE + '/api/social/friends', { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var el = document.getElementById('dost-list');
+        var friends = data.friends || [];
+        if (friends.length === 0) { el.innerHTML = '<div class="social-empty">No friends yet. Share your profile to connect!</div>'; return; }
+        el.innerHTML = friends.map(function(f) {
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (f.display_name || 'Runner') + '</div><div class="social-card-sub">' + (f.zones_owned || 0) + ' zones</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-ghost" onclick="removeDost(\'' + f.friendship_id + '\')">Remove</button></div></div>';
+        }).join('');
+    }).catch(function() { document.getElementById('dost-list').innerHTML = '<div class="social-empty">Could not load friends.</div>'; });
+}
+
+function loadDostRequests() {
+    fetch(API_BASE + '/api/social/friends/requests', { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var reqs = data.requests || [];
+        var countEl = document.getElementById('dost-req-count');
+        countEl.textContent = reqs.length > 0 ? '(' + reqs.length + ')' : '';
+        var el = document.getElementById('dost-requests');
+        if (reqs.length === 0) { el.innerHTML = '<div class="social-empty">No pending requests.</div>'; return; }
+        el.innerHTML = reqs.map(function(r) {
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (r.display_name || 'Runner') + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="acceptDost(\'' + r.friendship_id + '\')">Accept</button><button class="btn-sm btn-sm-ghost" onclick="declineDost(\'' + r.friendship_id + '\')">Decline</button></div></div>';
+        }).join('');
+    }).catch(function() {});
+}
+
+function acceptDost(id) {
+    fetch(API_BASE + '/api/social/friends/' + id + '/accept', { method: 'POST', headers: authHeaders() })
+    .then(function() { loadDostList(); loadDostRequests(); addActivity('Friend request accepted!'); })
+    .catch(function() { addActivity('Error accepting request.'); });
+}
+
+function declineDost(id) {
+    fetch(API_BASE + '/api/social/friends/' + id + '/decline', { method: 'POST', headers: authHeaders() })
+    .then(function() { loadDostRequests(); })
+    .catch(function() { addActivity('Error declining request.'); });
+}
+
+function removeDost(id) {
+    fetch(API_BASE + '/api/social/friends/' + id, { method: 'DELETE', headers: authHeaders() })
+    .then(function() { loadDostList(); addActivity('Friend removed.'); })
+    .catch(function() { addActivity('Error removing friend.'); });
+}
+
+// --- FAUJ ---
+function loadFauj() {
+    fetch(API_BASE + '/api/social/fauj/mine', { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var el = document.getElementById('fauj-content');
+        if (!data.fauj) {
+            el.innerHTML = '<div class="social-empty">You are not in a Fauj yet.</div>' +
+                '<div class="input-row"><input id="fauj-name" class="input-sm" placeholder="Fauj name..."></div>' +
+                '<button class="btn-sm btn-sm-primary" onclick="createFauj()" style="width:100%;">Create Fauj</button>' +
+                '<div style="margin-top:0.75rem;"><button class="btn-sm btn-sm-ghost" onclick="loadFaujInvites()" style="width:100%;">Check Invites</button></div>' +
+                '<div id="fauj-invites" style="margin-top:0.5rem;"></div>';
+            return;
+        }
+        var fauj = data.fauj;
+        var members = fauj.members || [];
+        var isLeader = data.role === 'leader';
+        var html = '<div class="fauj-header"><span class="fauj-title">' + fauj.name + '</span><span class="fauj-badge">' + members.length + '/8</span></div>';
+        html += members.map(function(m) {
+            var label = m.role === 'leader' ? ' (Sardar)' : '';
+            var duelBtn = (m.user_id !== currentUser.id) ? '<button class="btn-sm btn-sm-ghost" onclick="challengeDwandva(\'' + m.user_id + '\')">Duel</button>' : '';
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (m.display_name || 'Runner') + label + '</div><div class="social-card-sub">' + (m.zones_owned || 0) + ' zones</div></div></div><div class="social-card-actions">' + duelBtn + '</div></div>';
+        }).join('');
+        html += '<div style="margin-top:0.5rem;">';
+        if (isLeader) {
+            html += '<div class="input-row"><input id="fauj-invite-id" class="input-sm" placeholder="User ID to invite..."><button class="btn-sm btn-sm-primary" onclick="inviteToFauj(\'' + fauj.id + '\')">Invite</button></div>';
+        }
+        html += '<button class="btn-sm btn-sm-danger" onclick="leaveFauj()" style="width:100%;">' + (isLeader ? 'Disband Fauj' : 'Leave Fauj') + '</button>';
+        html += '</div>';
+        el.innerHTML = html;
+    }).catch(function() { document.getElementById('fauj-content').innerHTML = '<div class="social-empty">Could not load Fauj.</div>'; });
+}
+
+function createFauj() {
+    var name = document.getElementById('fauj-name').value.trim();
+    if (!name) { addActivity('Enter a Fauj name.'); return; }
+    fetch(API_BASE + '/api/social/fauj', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ name: name }) })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) { loadFauj(); addActivity('Fauj "' + name + '" created!'); }
+        else { addActivity('Error: ' + (data.error || 'Failed')); }
+    }).catch(function() { addActivity('Error creating Fauj.'); });
+}
+
+function inviteToFauj(faujId) {
+    var userId = document.getElementById('fauj-invite-id').value.trim();
+    if (!userId) { addActivity('Enter a user ID.'); return; }
+    fetch(API_BASE + '/api/social/fauj/' + faujId + '/invite', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ userId: userId }) })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) { addActivity('Invite sent!'); document.getElementById('fauj-invite-id').value = ''; }
+        else { addActivity('Error: ' + (data.error || 'Failed')); }
+    }).catch(function() { addActivity('Error inviting user.'); });
+}
+
+function loadFaujInvites() {
+    fetch(API_BASE + '/api/social/fauj/invites', { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var el = document.getElementById('fauj-invites');
+        var invites = data.invites || [];
+        if (invites.length === 0) { el.innerHTML = '<div class="social-empty">No pending invites.</div>'; return; }
+        el.innerHTML = invites.map(function(inv) {
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (inv.fauj_name || 'Fauj') + '</div><div class="social-card-sub">From ' + (inv.invited_by_name || 'someone') + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="respondInvite(\'' + inv.id + '\', true)">Join</button><button class="btn-sm btn-sm-ghost" onclick="respondInvite(\'' + inv.id + '\', false)">Decline</button></div></div>';
+        }).join('');
+    }).catch(function() {});
+}
+
+function respondInvite(id, accept) {
+    fetch(API_BASE + '/api/social/fauj/invites/' + id + '/respond', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ accept: accept }) })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) { loadFauj(); addActivity(accept ? 'Joined Fauj!' : 'Invite declined.'); }
+        else { addActivity('Error: ' + (data.error || 'Failed')); }
+    }).catch(function() { addActivity('Error responding to invite.'); });
+}
+
+function leaveFauj() {
+    fetch(API_BASE + '/api/social/fauj/leave', { method: 'POST', headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) { loadFauj(); addActivity('Left Fauj.'); }
+        else { addActivity('Error: ' + (data.error || 'Failed')); }
+    }).catch(function() { addActivity('Error leaving Fauj.'); });
+}
+
+// --- DWANDVA (Duels) ---
+function loadDwandva() {
+    fetch(API_BASE + '/api/social/duels', { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var el = document.getElementById('dwandva-content');
+        var duels = data.duels || [];
+        if (duels.length === 0) { el.innerHTML = '<div class="social-empty">No active duels. Challenge a Fauj mate from the Fauj tab!</div>'; return; }
+        el.innerHTML = duels.map(function(d) {
+            var isChallenger = d.challenger_id === currentUser.id;
+            var otherName = isChallenger ? (d.opponent && d.opponent.display_name || 'Opponent') : (d.challenger && d.challenger.display_name || 'Challenger');
+            var statusClass = d.status === 'accepted' ? 'duel-accepted' : 'duel-pending';
+            var statusLabel = d.status === 'accepted' ? 'Active' : 'Pending';
+            var timeLeft = '';
+            if (d.status === 'accepted' && d.expires_at) {
+                var hrs = Math.max(0, Math.round((new Date(d.expires_at) - Date.now()) / 3600000));
+                timeLeft = ' (' + hrs + 'h left)';
+            }
+            var actions = '';
+            if (d.status === 'pending' && !isChallenger) {
+                actions = '<button class="btn-sm btn-sm-primary" onclick="acceptDwandva(\'' + d.id + '\')">Accept</button>';
+            }
+            actions += '<button class="btn-sm btn-sm-danger" onclick="cancelDwandva(\'' + d.id + '\')">Cancel</button>';
+            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">vs ' + otherName + '</div><div class="social-card-sub"><span class="duel-status ' + statusClass + '">' + statusLabel + '</span>' + timeLeft + '</div></div></div><div class="social-card-actions">' + actions + '</div></div>';
+        }).join('');
+    }).catch(function() { document.getElementById('dwandva-content').innerHTML = '<div class="social-empty">Could not load duels.</div>'; });
+}
+
+function challengeDwandva(opponentId) {
+    fetch(API_BASE + '/api/social/duels/challenge', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ opponentId: opponentId }) })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) { switchTab('dwandva'); loadDwandva(); addActivity('Duel challenge sent!'); }
+        else { addActivity('Error: ' + (data.error || 'Failed')); }
+    }).catch(function() { addActivity('Error sending challenge.'); });
+}
+
+function acceptDwandva(id) {
+    fetch(API_BASE + '/api/social/duels/' + id + '/accept', { method: 'POST', headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) { loadDwandva(); addActivity('Duel accepted! 48hrs on the clock.'); }
+        else { addActivity('Error: ' + (data.error || 'Failed')); }
+    }).catch(function() { addActivity('Error accepting duel.'); });
+}
+
+function cancelDwandva(id) {
+    fetch(API_BASE + '/api/social/duels/' + id + '/cancel', { method: 'POST', headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) { loadDwandva(); addActivity('Duel cancelled.'); }
+        else { addActivity('Error: ' + (data.error || 'Failed')); }
+    }).catch(function() { addActivity('Error cancelling duel.'); });
+}
+
+function loadCommunity() {
+    if (!authToken) return;
+    document.getElementById('community-section').style.display = 'block';
+    loadDostList();
+    loadDostRequests();
+    loadFauj();
+    loadDwandva();
+}
 
 if (!userIsLoggedIn) { setTimeout(function() { if (!userIsLoggedIn) { document.getElementById('fomo-banner').style.display = 'block'; } }, 5000); }
 if (window.innerWidth <= 768) { window.location.href = '/zamindar-mobile.html'; }
