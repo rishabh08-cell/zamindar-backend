@@ -371,11 +371,13 @@ function loadTerritories(bounds) {
         if (!data) return;
         territoryLayer.clearLayers();
         if (data.territories) {
+            var userId = currentUser && currentUser.id;
             data.territories.forEach(function(t) {
                 if (t.geojson) {
-                    var color = getRunnerColor(t.runner_id || 'default');
-                    var layer = L.geoJSON(t.geojson, { style: { color: color, fillColor: color, fillOpacity: 0.3, weight: 2 } });
-                    layer.bindPopup('<div class="popup-content"><h4>' + (t.runner_name || 'Unknown') + '</h4><p>Distance: ' + (t.distance_m / 1000).toFixed(1) + ' km</p><p>Claimed: ' + new Date(t.created_at).toLocaleDateString() + '</p>' + (t.contested ? '<p class="siege">' + LABELS.siegeLabel + '</p>' : '') + '</div>');
+                    var isOwn = userId && t.runner_id === userId;
+                    var color = isOwn ? '#e07850' : getRunnerColor(t.runner_id || 'default');
+                    var layer = L.geoJSON(t.geojson, { style: { color: isOwn ? '#ff6b35' : color, fillColor: color, fillOpacity: isOwn ? 0.35 : 0.3, weight: isOwn ? 3 : 2 } });
+                    layer.bindPopup('<div class="popup-content"><h4>' + (t.runner_name || 'Unknown') + (isOwn ? ' (You)' : '') + '</h4><p>Distance: ' + (t.distance_m / 1000).toFixed(1) + ' km</p><p>Claimed: ' + new Date(t.created_at).toLocaleDateString() + '</p>' + (t.contested ? '<p class="siege">' + LABELS.siegeLabel + '</p>' : '') + '</div>');
                     layer.addTo(territoryLayer);
                 }
             });
