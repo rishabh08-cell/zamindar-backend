@@ -8,75 +8,75 @@
     <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Tiro Devanagari Hindi', Georgia, serif; background: #0f1923; }
+        body { font-family: 'Tiro Devanagari Hindi', Georgia, serif; background: #f5f5f5; }
         #map { position: absolute; top: 0; left: 0; right: 320px; bottom: 0; z-index: 1; }
-        .leaflet-tile-pane { filter: hue-rotate(10deg) saturate(1.3) brightness(0.85); }
-        .side-panel { position: absolute; top: 0; right: 0; width: 320px; bottom: 0; background: #0f1923; color: #e0e8f0; overflow-y: auto; border-left: 2px solid #243447; z-index: 2; }
-        .panel-header { padding: 1.5rem; border-bottom: 1px solid #243447; background: linear-gradient(135deg, #1a2733, #0f1923); }
+        .leaflet-tile-pane { /* light tiles — no filter needed */ }
+        .side-panel { position: absolute; top: 0; right: 0; width: 320px; bottom: 0; background: #fff; color: #1a1a2e; overflow-y: auto; border-left: 2px solid #e0e0e0; z-index: 2; }
+        .panel-header { padding: 1.5rem; border-bottom: 1px solid #e0e0e0; background: linear-gradient(135deg, #fff, #f5f5f5); }
         .panel-header h1 { color: #e07850; font-size: 1.8rem; }
-        .panel-header p { color: #8899aa; font-size: 0.85rem; margin-top: 0.25rem; }
-        .panel-section { padding: 1rem 1.5rem; border-bottom: 1px solid #1a2733; }
+        .panel-header p { color: #666; font-size: 0.85rem; margin-top: 0.25rem; }
+        .panel-section { padding: 1rem 1.5rem; border-bottom: 1px solid #ffffff; }
         .panel-section h3 { color: #e89070; font-size: 1rem; margin-bottom: 0.75rem; }
-        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #1a2733; }
+        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #ffffff; }
         .leaderboard-item:last-child { border: none; }
-        .runner-name { color: #e0e8f0; font-size: 0.9rem; }
+        .runner-name { color: #1a1a2e; font-size: 0.9rem; }
         .runner-score { color: #e07850; font-weight: bold; font-size: 0.9rem; }
         .btn-strava { display: block; width: 100%; padding: 0.8rem; margin-top: 0.5rem; background: #d06a45; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-family: inherit; }
         .btn-strava:hover { background: #c06040; }
-        .btn-secondary { display: block; width: 100%; padding: 0.6rem; margin-top: 0.5rem; background: #243447; color: #e0e8f0; border: 1px solid #3a5060; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-family: inherit; }
-        .btn-secondary:hover { background: #3a5060; }
+        .btn-secondary { display: block; width: 100%; padding: 0.6rem; margin-top: 0.5rem; background: #f0f0f0; color: #1a1a2e; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-family: inherit; }
+        .btn-secondary:hover { background: #e0e0e0; }
         .btn-danger { display: block; width: 100%; padding: 0.6rem; margin-top: 0.5rem; background: transparent; color: #cc4444; border: 1px solid #cc4444; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
         .btn-danger:hover { background: #cc4444; color: #fff; }
         .map-controls { position: absolute; top: 10px; left: 60px; z-index: 1000; display: flex; gap: 6px; }
-        .map-btn { padding: 8px 14px; background: #0f1923; color: #e07850; border: 1px solid #e07850; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: inherit; }
-        .map-btn:hover, .map-btn.active { background: #e07850; color: #0f1923; }
-        .city-marker { background: #0f1923; border: 2px solid #e07850; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #e07850; }
-        .fomo-banner { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #1a2733, #0f1923); border: 1px solid #e07850; border-radius: 10px; padding: 1rem 1.5rem; color: #e0e8f0; text-align: center; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none; }
+        .map-btn { padding: 8px 14px; background: #fff; color: #e07850; border: 1px solid #e07850; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: inherit; }
+        .map-btn:hover, .map-btn.active { background: #e07850; color: #fff; }
+        .city-marker { background: #fff; border: 2px solid #e07850; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #e07850; }
+        .fomo-banner { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #fff, #f5f5f5); border: 1px solid #e07850; border-radius: 10px; padding: 1rem 1.5rem; color: #1a1a2e; text-align: center; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none; }
         .fomo-banner h4 { color: #e07850; margin-bottom: 0.25rem; }
-        .fomo-banner p { font-size: 0.85rem; color: #8899aa; margin-bottom: 0.5rem; }
-        .fomo-close { position: absolute; top: 6px; right: 10px; background: none; border: none; color: #8899aa; cursor: pointer; font-size: 1.2rem; }
+        .fomo-banner p { font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; }
+        .fomo-close { position: absolute; top: 6px; right: 10px; background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; }
         .user-profile { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
         .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #e07850; }
         .user-name { color: #e07850; font-size: 1rem; font-weight: bold; }
-        .user-stats { font-size: 0.8rem; color: #8899aa; }
+        .user-stats { font-size: 0.8rem; color: #666; }
         .popup-content h4 { color: #e07850; margin-bottom: 4px; }
         .popup-content p { font-size: 0.85rem; color: #333; margin: 2px 0; }
         .popup-content .siege { color: #cc0000; font-weight: bold; }
         .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; }
         .confirm-overlay.active { display: flex; }
-        .confirm-box { background: #1a2733; border: 1px solid #e07850; border-radius: 10px; padding: 1.5rem; max-width: 360px; width: 90%; text-align: center; }
+        .confirm-box { background: #ffffff; border: 1px solid #e07850; border-radius: 10px; padding: 1.5rem; max-width: 360px; width: 90%; text-align: center; }
         .confirm-box h3 { color: #e07850; margin-bottom: 0.5rem; }
-        .confirm-box p { color: #8899aa; font-size: 0.9rem; margin-bottom: 1rem; }
+        .confirm-box p { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
         .confirm-box .btn-row { display: flex; gap: 0.5rem; }
         .confirm-box .btn-row button { flex: 1; }
         /* Community (Biradari) */
-        .community-tabs { display: flex; gap: 0; border-bottom: 1px solid #243447; margin-bottom: 0.75rem; }
+        .community-tabs { display: flex; gap: 0; border-bottom: 1px solid #e0e0e0; margin-bottom: 0.75rem; }
         .community-tab { flex: 1; padding: 0.5rem 0; text-align: center; font-size: 0.8rem; color: #5a7080; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit; }
         .community-tab.active { color: #e07850; border-bottom-color: #e07850; }
         .community-tab:hover { color: #e89070; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .social-card { background: #1a2733; border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
+        .social-card { background: #ffffff; border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
         .social-card-info { display: flex; align-items: center; gap: 0.5rem; }
-        .social-card-name { color: #e0e8f0; font-size: 0.85rem; }
+        .social-card-name { color: #1a1a2e; font-size: 0.85rem; }
         .social-card-sub { color: #5a7080; font-size: 0.7rem; }
         .social-card-actions { display: flex; gap: 0.25rem; }
         .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-family: inherit; border: none; }
         .btn-sm-primary { background: #e07850; color: #fff; }
         .btn-sm-primary:hover { background: #c06040; }
-        .btn-sm-ghost { background: none; color: #8899aa; border: 1px solid #243447; }
-        .btn-sm-ghost:hover { background: #243447; }
+        .btn-sm-ghost { background: none; color: #666; border: 1px solid #e0e0e0; }
+        .btn-sm-ghost:hover { background: #e0e0e0; }
         .btn-sm-danger { background: none; color: #cc4444; border: 1px solid #cc4444; }
         .btn-sm-danger:hover { background: #cc4444; color: #fff; }
         .social-empty { color: #5a7080; font-size: 0.8rem; text-align: center; padding: 1rem 0; }
         .fauj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
         .fauj-title { color: #e89070; font-size: 1rem; font-weight: bold; }
-        .fauj-badge { display: inline-block; background: #e07850; color: #0f1923; font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 10px; font-weight: bold; }
+        .fauj-badge { display: inline-block; background: #e07850; color: #fff; font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 10px; font-weight: bold; }
         .duel-status { font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 10px; }
         .duel-pending { background: #3a5060; color: #e9c46a; }
         .duel-accepted { background: #2a4d3e; color: #2a9d8f; }
         .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
-        .input-sm { flex: 1; padding: 0.4rem 0.6rem; background: #1a2733; border: 1px solid #243447; border-radius: 4px; color: #e0e8f0; font-size: 0.8rem; font-family: inherit; }
+        .input-sm { flex: 1; padding: 0.4rem 0.6rem; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px; color: #1a1a2e; font-size: 0.8rem; font-family: inherit; }
         .input-sm::placeholder { color: #3a5060; }
     </style>
 </head>
@@ -90,9 +90,9 @@
     <div class="panel-section" id="auth-section">
         <div id="auth-loggedout">
             <h3>Join the Game</h3>
-            <p style="font-size:0.85rem; color:#8899aa; margin-bottom:0.5rem;">Create an account or log in to claim territory with every run.</p>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:0.5rem;">Create an account or log in to claim territory with every run.</p>
             <button class="btn-strava" onclick="window.location.href='/'">Log In / Sign Up</button>
-            <div style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;"><div style="flex:1; height:1px; background:#243447;"></div><span style="color:#5a7080; font-size:0.8rem;">or</span><div style="flex:1; height:1px; background:#243447;"></div></div>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;"><div style="flex:1; height:1px; background:#e0e0e0;"></div><span style="color:#5a7080; font-size:0.8rem;">or</span><div style="flex:1; height:1px; background:#e0e0e0;"></div></div>
             <button class="btn-secondary" onclick="window.location.href='/auth/strava'">Sign up with Strava</button>
         </div>
         <div id="auth-loggedin" style="display:none;">
@@ -259,6 +259,10 @@ if (authToken) {
         currentUser = { id: data.user.id, name: data.user.displayName, displayName: data.user.displayName, avatarUrl: data.user.avatarUrl, zonesOwned: data.user.zonesOwned, totalDistanceKm: data.user.totalDistanceKm, stravaConnected: data.user.stravaConnected };
         localStorage.setItem('zamindar_user', JSON.stringify(currentUser));
         showLoggedIn(currentUser);
+        // Center map on user's home city
+        if (data.user.homeCity && data.user.homeCity.lat && data.user.homeCity.lng) {
+            map.setView([data.user.homeCity.lat, data.user.homeCity.lng], 12);
+        }
     })
     .catch(function() {
         if (currentUser && currentUser.id) {
@@ -351,7 +355,7 @@ function deleteAccount() {
 
 
 var map = L.map('map', { zoomControl: true }).setView(INDIA_CENTER, INDIA_ZOOM);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '\u00a9 OpenStreetMap \u00a9 CARTO', maxZoom: 19 }).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '\u00a9 OpenStreetMap \u00a9 CARTO', maxZoom: 19 }).addTo(map);
 var territoryLayer = L.layerGroup().addTo(map);
 var cityLayer = L.layerGroup().addTo(map);
 var COLORS = ['#e07850','#00b4d8','#e63946','#2a9d8f','#e9c46a','#f4a261','#264653','#9b5de5'];

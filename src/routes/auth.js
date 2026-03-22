@@ -7,6 +7,7 @@ const { createUser, createUserFromStrava, getUserByEmail, getUserById, getUserBy
 const { upsertStravaConnection, getConnectionByStravaId, getConnectionByUserId, updateTokens } = require('../db/stravaConnections');
 const { processStravaActivity } = require('../lib/stravaProcessor');
 const { supabase } = require('../db/client');
+const { getAllCities, getCityById } = require('../db/cities');
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
@@ -174,10 +175,21 @@ async function initialStravaSync(accessToken, athleteId, userId) {
 // ROUTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ─── GET /auth/cities — Public list of cities for signup city picker ─────────
+router.get('/cities', async (req, res) => {
+    try {
+        const cities = await getAllCities();
+        res.json({ cities: (cities || []).map(c => ({ id: c.id, name: c.name, state: c.state, lat: parseFloat(c.lat), lng: parseFloat(c.lng) })) });
+    } catch (err) {
+        console.error('Get cities error:', err);
+        res.status(500).json({ error: 'Failed to fetch cities' });
+    }
+});
+
 // ─── POST /auth/signup — Email + password signup ─────────────────────────────
 router.post('/signup', async (req, res) => {
     try {
-          const { email, password, displayName } = req.body;
+          const { email, password, displayName, homeCityId } = req.body;
 
       if (!email || !password) {
               return res.status(400).json({ error: 'Email and password are required' });
@@ -192,7 +204,7 @@ router.post('/signup', async (req, res) => {
           }
 
       const passwordHash = await bcrypt.hash(password, 12);
-          const user = await createUser({ email, passwordHash, displayName });
+          const user = await createUser({ email, passwordHash, displayName, homeCityId });
 
       const token = signToken(user);
           await createSession(user.id, token, req.headers['user-agent']);
@@ -298,6 +310,15 @@ router.get('/me', async (req, res) => {
 
       const stravaConnection = await getConnectionByUserId(user.id);
 
+      // Fetch home city details if set
+      let homeCity = null;
+      if (user.home_city_id) {
+              try {
+                      const city = await getCityById(user.home_city_id);
+                      homeCity = { id: city.id, name: city.name, lat: parseFloat(city.lat), lng: parseFloat(city.lng) };
+              } catch (e) { /* city may have been deleted */ }
+      }
+
       res.json({
               user: {
                         id: user.id,
@@ -310,6 +331,7 @@ router.get('/me', async (req, res) => {
                         totalDistanceKm: user.total_distance_km,
                         totalAreaM2: user.total_area_m2,
                         createdAt: user.created_at,
+                        homeCity,
               },
       });
     } catch (err) {

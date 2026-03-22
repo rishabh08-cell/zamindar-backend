@@ -28,7 +28,7 @@ const MAP = {
   MIN_ZOOM:         4,
   MAX_ZOOM:         17,
   CITY_ZOOM_LEVEL:  10,                 // zoom in to this when clicking a city
-  TILE_URL:         'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  TILE_URL:         'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   TILE_ATTR:        '&copy; OpenStreetMap &copy; CARTO',
 };
 
@@ -603,14 +603,14 @@ function createMapRenderer({ containerId, currentUserId, onZoneClick, onCityClic
 
 const POPUP_CSS = `
   .tr-popup .leaflet-popup-content-wrapper {
-    background: #111c28;
-    border: 1px solid rgba(255,255,255,0.12);
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.1);
     border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    color: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    color: #1a1a2e;
   }
   .tr-popup .leaflet-popup-tip {
-    background: #111c28;
+    background: #ffffff;
   }
   .tr-popup .leaflet-popup-content {
     margin: 12px 14px;

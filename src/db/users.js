@@ -5,14 +5,17 @@ const { supabase } = require('./client');
 // Users can sign up via email or be auto-created through Strava OAuth.
 
 // ── Create a user from email signup ──────────────────────────────────────────
-async function createUser({ email, passwordHash, displayName }) {
-      const { data, error } = await supabase
-        .from('users')
-        .insert({
+async function createUser({ email, passwordHash, displayName, homeCityId }) {
+      const row = {
                   email,
                   password_hash: passwordHash,
                   display_name: displayName || email.split('@')[0],
-        })
+      };
+      if (homeCityId) row.home_city_id = homeCityId;
+
+      const { data, error } = await supabase
+        .from('users')
+        .insert(row)
         .select()
         .single();
 

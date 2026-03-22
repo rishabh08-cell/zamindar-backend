@@ -49,6 +49,16 @@
     }
     .form-group input:focus { border-color: #ff6b00; }
     .form-group input::placeholder { color: #6a5040; }
+    .form-group select {
+      padding: 0.8rem 1rem; border-radius: 8px; border: 2px solid #3a2a1a;
+      background: #2a1a10; color: #f5e6d3; font-size: 1rem;
+      font-family: 'Tiro Devanagari Hindi', Georgia, serif;
+      transition: border-color 0.3s ease; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236a5040' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 1rem center;
+    }
+    .form-group select:focus { border-color: #ff6b00; }
 
     .divider { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0; }
     .divider-line { flex: 1; height: 1px; background: #3a2a1a; }
@@ -142,6 +152,12 @@
         <div class="form-group">
           <label for="signupPassword">Password</label>
           <input type="password" id="signupPassword" placeholder="Min 8 characters">
+        </div>
+        <div class="form-group">
+          <label for="signupCity">Your City</label>
+          <select id="signupCity">
+            <option value="">Loading cities...</option>
+          </select>
         </div>
         <button class="btn btn-primary" id="signupBtn" onclick="handleSignup()">Create Account</button>
 
@@ -277,11 +293,30 @@
       document.getElementById('authSuccess').classList.remove('show');
     }
 
+    // Load cities for the signup picker
+    async function loadCities() {
+      try {
+        const res = await fetch('/auth/cities');
+        if (!res.ok) return;
+        const data = await res.json();
+        const select = document.getElementById('signupCity');
+        select.innerHTML = '<option value="">Select your city</option>';
+        (data.cities || []).forEach(function(c) {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name + (c.state ? ', ' + c.state : '');
+          select.appendChild(opt);
+        });
+      } catch(e) { console.error('Failed to load cities:', e); }
+    }
+    loadCities();
+
     async function handleSignup() {
       hideMessages();
       const email = document.getElementById('signupEmail').value.trim();
       const password = document.getElementById('signupPassword').value;
       const displayName = document.getElementById('signupName').value.trim();
+      const homeCityId = document.getElementById('signupCity').value || undefined;
 
       if (!email || !password) { showError('Email and password are required.'); return; }
       if (password.length < 8) { showError('Password must be at least 8 characters.'); return; }
@@ -294,7 +329,7 @@
         const res = await fetch('/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, displayName }),
+          body: JSON.stringify({ email, password, displayName, homeCityId }),
         });
         const data = await res.json();
         if (!res.ok) { showError(data.error || 'Signup failed'); return; }
