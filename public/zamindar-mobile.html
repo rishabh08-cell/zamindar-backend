@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0f1923">
+  <meta name="theme-color" content="#f5f5f5">
   <meta name="description" content="Zamindar - India's running territory game. Claim land by running.">
   <link rel="manifest" href="data:application/json,{}">
   <title>Zamindar - Territory Map</title>
@@ -16,7 +16,7 @@
     html, body { height: 100%; overflow: hidden; }
     body {
       font-family: 'Tiro Devanagari Hindi', Georgia, serif;
-      background: #0f1923; color: #e0e8f0;
+      background: #f5f5f5; color: #1a1a2e;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
     }
@@ -24,17 +24,17 @@
     /* ── Splash Screen ── */
     .splash {
       position: fixed; inset: 0; z-index: 9999;
-      background: #0f1923;
+      background: #f5f5f5;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       transition: opacity 0.6s ease, visibility 0.6s ease;
     }
     .splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
     .splash h1 { font-size: 3rem; color: #e07850; margin-bottom: 0.25rem; }
-    .splash p { color: #8899aa; font-size: 1rem; margin-bottom: 2rem; }
+    .splash p { color: #666; font-size: 1rem; margin-bottom: 2rem; }
     .splash-loader {
       width: 40px; height: 40px;
-      border: 3px solid #243447; border-top-color: #e07850;
+      border: 3px solid #e0e0e0; border-top-color: #e07850;
       border-radius: 50%; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -44,7 +44,7 @@
       position: absolute; top: 0; left: 0; right: 0;
       bottom: 60px; z-index: 1;
     }
-    .leaflet-tile-pane { filter: hue-rotate(10deg) saturate(1.3) brightness(0.85); }
+    .leaflet-tile-pane { /* light tiles — no filter needed */ }
 
     /* ── Toast Notification ── */
     .toast-container {
@@ -54,9 +54,9 @@
       pointer-events: none;
     }
     .toast {
-      background: #1a2733; border: 1px solid #243447;
+      background: #ffffff; border: 1px solid #e0e0e0;
       border-radius: 10px; padding: 10px 14px;
-      color: #e0e8f0; font-size: 0.85rem;
+      color: #1a1a2e; font-size: 0.85rem;
       display: flex; align-items: center; gap: 8px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
       transform: translateY(-80px); opacity: 0;
@@ -75,13 +75,13 @@
     }
     .action-btn {
       width: 44px; height: 44px; border-radius: 10px;
-      background: rgba(15,25,35,0.92); backdrop-filter: blur(8px);
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
       border: 1px solid #e07850; color: #e07850;
       font-size: 1.1rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.2s ease;
     }
-    .action-btn:active { background: #e07850; color: #0f1923; transform: scale(0.93); }
+    .action-btn:active { background: #e07850; color: #fff; transform: scale(0.93); }
     .action-btn.tracking { border-color: #2a9d8f; color: #2a9d8f; animation: pulse-border 2s infinite; }
     @keyframes pulse-border {
       0%,100% { box-shadow: 0 0 0 0 rgba(42,157,143,0.4); }
@@ -91,11 +91,11 @@
     /* ── Status Pill (top-left) ── */
     .status-pill {
       position: absolute; top: 10px; left: 10px;
-      z-index: 1000; background: rgba(15,25,35,0.92);
+      z-index: 1000; background: rgba(255,255,255,0.92);
       backdrop-filter: blur(8px);
-      border: 1px solid #243447; border-radius: 20px;
+      border: 1px solid #e0e0e0; border-radius: 20px;
       padding: 6px 12px; font-size: 0.75rem;
-      color: #8899aa; display: flex; align-items: center; gap: 6px;
+      color: #666; display: flex; align-items: center; gap: 6px;
     }
     .status-dot {
       width: 7px; height: 7px; border-radius: 50%;
@@ -109,14 +109,14 @@
       position: fixed; bottom: 0; left: 0; right: 0;
       height: calc(60px + env(safe-area-inset-bottom));
       padding-bottom: env(safe-area-inset-bottom);
-      background: rgba(15,25,35,0.96); backdrop-filter: blur(10px);
-      border-top: 1px solid #243447;
+      background: rgba(255,255,255,0.96); backdrop-filter: blur(10px);
+      border-top: 1px solid #e0e0e0;
       display: flex; justify-content: space-around; align-items: center;
       z-index: 1000;
     }
     .nav-btn {
       display: flex; flex-direction: column; align-items: center;
-      background: none; border: none; color: #4a6070;
+      background: none; border: none; color: #999;
       font-size: 0.65rem; font-family: inherit;
       cursor: pointer; padding: 6px 12px; min-width: 56px;
       transition: color 0.2s ease;
@@ -137,7 +137,7 @@
     .sheet-backdrop.open { opacity: 1; visibility: visible; }
     .bottom-sheet {
       position: fixed; bottom: 60px; left: 0; right: 0;
-      background: #0f1923; border-top: 2px solid #e07850;
+      background: #ffffff; border-top: 2px solid #e07850;
       border-radius: 20px 20px 0 0; z-index: 1600;
       transform: translateY(100%);
       transition: transform 0.35s cubic-bezier(.4,0,.2,1);
@@ -147,17 +147,17 @@
     .sheet-handle-area { padding: 10px 0 4px; text-align: center; cursor: grab; }
     .sheet-handle {
       width: 36px; height: 4px;
-      background: #243447; border-radius: 2px;
+      background: #ddd; border-radius: 2px;
       margin: 0 auto;
     }
     .sheet-tabs {
-      display: flex; border-bottom: 1px solid #1a2733;
+      display: flex; border-bottom: 1px solid #eee;
       padding: 0 1rem; flex-shrink: 0;
     }
     .sheet-tab {
       flex: 1; padding: 10px 4px; text-align: center;
       background: none; border: none; border-bottom: 2px solid transparent;
-      color: #4a6070; font-family: inherit; font-size: 0.85rem;
+      color: #999; font-family: inherit; font-size: 0.85rem;
       cursor: pointer; transition: all 0.2s ease;
     }
     .sheet-tab.active { color: #e07850; border-bottom-color: #e07850; }
@@ -170,27 +170,27 @@
     /* ── Leaderboard ── */
     .leaderboard-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 0.65rem 0; border-bottom: 1px solid #1a2733;
+      padding: 0.65rem 0; border-bottom: 1px solid #eee;
     }
     .leaderboard-item:last-child { border: none; }
     .lb-rank {
       width: 24px; height: 24px; border-radius: 50%;
-      background: #1a2733; color: #e07850;
+      background: #f0f0f0; color: #e07850;
       display: flex; align-items: center; justify-content: center;
       font-size: 0.7rem; font-weight: bold; flex-shrink: 0;
       margin-right: 10px;
     }
-    .lb-rank.gold { background: #e07850; color: #0f1923; }
-    .lb-rank.silver { background: #8899aa; color: #0f1923; }
-    .lb-rank.bronze { background: #4a6a80; color: #e0e8f0; }
+    .lb-rank.gold { background: #e07850; color: #fff; }
+    .lb-rank.silver { background: #aaa; color: #fff; }
+    .lb-rank.bronze { background: #c4956a; color: #fff; }
     .lb-info { flex: 1; min-width: 0; }
-    .runner-name { color: #e0e8f0; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .runner-city { color: #4a6070; font-size: 0.72rem; }
+    .runner-name { color: #1a1a2e; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .runner-city { color: #999; font-size: 0.72rem; }
     .runner-score { color: #e07850; font-weight: bold; font-size: 0.85rem; white-space: nowrap; }
 
     /* ── Skeleton loading ── */
     .skeleton {
-      background: linear-gradient(90deg, #1a2733 25%, #243447 50%, #1a2733 75%);
+      background: linear-gradient(90deg, #eee 25%, #ddd 50%, #eee 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
       border-radius: 6px;
@@ -205,7 +205,7 @@
     /* ── FOMO Card ── */
     .fomo-card {
       position: fixed; bottom: 70px; left: 10px; right: 10px;
-      background: linear-gradient(135deg, #1a2733, #0f1923);
+      background: linear-gradient(135deg, #fff, #f5f5f5);
       border: 1px solid #e07850; border-radius: 14px;
       padding: 1rem 1rem 0.75rem; z-index: 1400;
       display: none; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
@@ -213,14 +213,14 @@
     }
     @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .fomo-card h4 { color: #e07850; font-size: 0.95rem; }
-    .fomo-card p { color: #8899aa; font-size: 0.8rem; margin: 0.25rem 0; }
+    .fomo-card p { color: #666; font-size: 0.8rem; margin: 0.25rem 0; }
     .fomo-close {
       position: absolute; top: 8px; right: 12px;
-      background: none; border: none; color: #4a6070;
+      background: none; border: none; color: #999;
       font-size: 1.4rem; cursor: pointer; padding: 4px;
     }
     .fomo-dismiss {
-      color: #4a6070; font-size: 0.72rem;
+      color: #999; font-size: 0.72rem;
       background: none; border: none; margin-top: 0.4rem; cursor: pointer;
     }
 
@@ -239,7 +239,7 @@
     /* ── Profile Screen ── */
     .profile-screen {
       position: fixed; inset: 0; bottom: 60px;
-      background: #0f1923; z-index: 1400;
+      background: #f5f5f5; z-index: 1400;
       overflow-y: auto; -webkit-overflow-scrolling: touch;
       transform: translateX(100%);
       transition: transform 0.35s cubic-bezier(.4,0,.2,1);
@@ -247,7 +247,7 @@
     .profile-screen.open { transform: translateX(0); }
     .profile-header {
       padding: 1.25rem 1rem 0.75rem;
-      background: linear-gradient(180deg, #1a2733 0%, #0f1923 100%);
+      background: linear-gradient(180deg, #fff 0%, #f5f5f5 100%);
       position: relative;
     }
     .profile-back {
@@ -262,69 +262,69 @@
     .profile-avatar {
       width: 52px; height: 52px; border-radius: 50%;
       border: 3px solid #e07850; flex-shrink: 0;
-      background: #1a2733; display: flex;
+      background: #ffffff; display: flex;
       align-items: center; justify-content: center;
       font-size: 1.5rem; color: #e07850; overflow: hidden;
     }
     .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .profile-info { flex: 1; min-width: 0; }
-    .profile-name { font-size: 1.15rem; color: #e0e8f0; font-weight: bold; }
+    .profile-name { font-size: 1.15rem; color: #1a1a2e; font-weight: bold; }
     .profile-subtitle { font-size: 0.78rem; color: #e07850; }
     .profile-rank-badge {
       text-align: right; flex-shrink: 0;
     }
-    .profile-rank-num { font-size: 1.3rem; color: #e0e8f0; font-weight: bold; }
-    .profile-rank-label { font-size: 0.65rem; color: #4a6070; text-transform: uppercase; letter-spacing: 0.5px; }
+    .profile-rank-num { font-size: 1.3rem; color: #1a1a2e; font-weight: bold; }
+    .profile-rank-label { font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
     .profile-stats {
       display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 1px; background: #243447; margin: 0.75rem 0 0;
+      gap: 1px; background: #e0e0e0; margin: 0.75rem 0 0;
       border-radius: 10px; overflow: hidden;
     }
     .stat-card {
-      background: #0f1923; padding: 0.65rem 0.3rem; text-align: center;
+      background: #f5f5f5; padding: 0.65rem 0.3rem; text-align: center;
     }
-    .stat-value { font-size: 1.3rem; color: #e0e8f0; font-weight: bold; }
-    .stat-label { font-size: 0.65rem; color: #4a6070; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .stat-value { font-size: 1.3rem; color: #1a1a2e; font-weight: bold; }
+    .stat-label { font-size: 0.65rem; color: #999; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
     .profile-section {
-      padding: 1rem; border-top: 1px solid #1a2733;
+      padding: 1rem; border-top: 1px solid #eee;
     }
     .profile-section h3 { color: #e89070; font-size: 0.95rem; margin-bottom: 0.6rem; }
     /* ── Social / Community ── */
     .community-tabs {
-      display: flex; gap: 0; border-bottom: 1px solid #243447; margin-bottom: 0.75rem;
+      display: flex; gap: 0; border-bottom: 1px solid #e0e0e0; margin-bottom: 0.75rem;
     }
     .community-tab {
       flex: 1; padding: 0.6rem 0; text-align: center; font-size: 0.82rem;
-      color: #4a6070; background: none; border: none;
+      color: #999; background: none; border: none;
       border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit;
     }
     .community-tab.active { color: #e07850; border-bottom-color: #e07850; }
     .social-card {
-      background: #1a2733; border-radius: 8px; padding: 0.6rem 0.75rem;
+      background: #ffffff; border-radius: 8px; padding: 0.6rem 0.75rem;
       margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;
     }
     .social-card-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; flex: 1; }
-    .social-card-name { color: #e0e8f0; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .social-card-sub { color: #4a6070; font-size: 0.7rem; }
+    .social-card-name { color: #1a1a2e; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .social-card-sub { color: #999; font-size: 0.7rem; }
     .social-card-actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
     .btn-sm { padding: 0.35rem 0.6rem; font-size: 0.72rem; border-radius: 6px; cursor: pointer; font-family: inherit; border: none; }
     .btn-sm-primary { background: #e07850; color: #fff; }
     .btn-sm-primary:active { background: #c06040; }
-    .btn-sm-ghost { background: none; color: #8899aa; border: 1px solid #243447; }
-    .btn-sm-ghost:active { background: #243447; }
+    .btn-sm-ghost { background: none; color: #666; border: 1px solid #e0e0e0; }
+    .btn-sm-ghost:active { background: #e0e0e0; }
     .btn-sm-danger { background: none; color: #cc4444; border: 1px solid #cc4444; }
     .btn-sm-danger:active { background: #cc4444; color: #fff; }
-    .social-empty { color: #4a6070; font-size: 0.82rem; text-align: center; padding: 1rem 0; }
+    .social-empty { color: #999; font-size: 0.82rem; text-align: center; padding: 1rem 0; }
     .fauj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
     .fauj-title { color: #e89070; font-size: 1rem; font-weight: bold; }
-    .fauj-badge { display: inline-block; background: #e07850; color: #0f1923; font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: bold; }
+    .fauj-badge { display: inline-block; background: #e07850; color: #fff; font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: bold; }
     .duel-status { font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 10px; }
     .duel-pending { background: #3a5060; color: #e9c46a; }
     .duel-accepted { background: #2a4d3e; color: #2a9d8f; }
     .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
     .input-sm {
-      flex: 1; padding: 0.45rem 0.6rem; background: #1a2733;
-      border: 1px solid #243447; border-radius: 6px; color: #e0e8f0;
+      flex: 1; padding: 0.45rem 0.6rem; background: #ffffff;
+      border: 1px solid #e0e0e0; border-radius: 6px; color: #1a1a2e;
       font-size: 0.82rem; font-family: inherit;
     }
     .input-sm::placeholder { color: #3a5060; }
@@ -339,20 +339,20 @@
     .filter-chips::-webkit-scrollbar { display: none; }
     .filter-chip {
       padding: 0.35rem 0.75rem; border-radius: 16px;
-      background: #1a2733; border: 1px solid #243447;
-      color: #8899aa; font-size: 0.75rem; font-family: inherit;
+      background: #ffffff; border: 1px solid #e0e0e0;
+      color: #666; font-size: 0.75rem; font-family: inherit;
       white-space: nowrap; cursor: pointer; transition: all 0.2s;
     }
-    .filter-chip.active { background: #e07850; border-color: #e07850; color: #0f1923; }
+    .filter-chip.active { background: #e07850; border-color: #e07850; color: #fff; }
     .filter-chip:active { transform: scale(0.95); }
     .run-history-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 0.6rem 0; border-bottom: 1px solid #1a2733;
+      padding: 0.6rem 0; border-bottom: 1px solid #eee;
     }
     .run-dot { width: 8px; height: 8px; border-radius: 50%; background: #e07850; flex-shrink: 0; }
     .run-info { flex: 1; }
-    .run-title { color: #e0e8f0; font-size: 0.85rem; }
-    .run-meta { color: #4a6070; font-size: 0.72rem; }
+    .run-title { color: #1a1a2e; font-size: 0.85rem; }
+    .run-meta { color: #999; font-size: 0.72rem; }
     .run-area { color: #e07850; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
     .profile-cta {
       padding: 1.5rem 1rem;
@@ -369,43 +369,43 @@
     }
     .tutorial-overlay.show { display: flex; }
     .tutorial-card {
-      background: #0f1923; border: 1px solid #e07850;
+      background: #f5f5f5; border: 1px solid #e07850;
       border-radius: 16px; padding: 1.5rem;
       text-align: center; max-width: 300px; width: 100%;
     }
-    .tutorial-step { font-size: 0.75rem; color: #4a6070; margin-bottom: 0.5rem; }
+    .tutorial-step { font-size: 0.75rem; color: #999; margin-bottom: 0.5rem; }
     .tutorial-icon { font-size: 3rem; margin-bottom: 0.5rem; }
     .tutorial-card h3 { color: #e07850; font-size: 1.1rem; margin-bottom: 0.5rem; }
-    .tutorial-card p { color: #8899aa; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1rem; }
+    .tutorial-card p { color: #666; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1rem; }
     .tutorial-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 1rem; }
-    .tutorial-dot { width: 8px; height: 8px; border-radius: 50%; background: #243447; }
+    .tutorial-dot { width: 8px; height: 8px; border-radius: 50%; background: #e0e0e0; }
     .tutorial-dot.active { background: #e07850; }
     .tutorial-btn {
       padding: 10px 24px; border: none; border-radius: 8px;
-      background: #e07850; color: #0f1923; font-family: inherit;
+      background: #e07850; color: #fff; font-family: inherit;
       font-size: 0.9rem; font-weight: bold; cursor: pointer;
     }
     .tutorial-skip {
-      background: none; border: none; color: #4a6070;
+      background: none; border: none; color: #999;
       font-size: 0.75rem; cursor: pointer; margin-top: 0.75rem;
     }
 
     /* ── City/Territory Popups ── */
     .leaflet-popup-content-wrapper {
-      background: #0f1923; color: #e0e8f0;
-      border: 1px solid #243447; border-radius: 12px;
+      background: #f5f5f5; color: #1a1a2e;
+      border: 1px solid #e0e0e0; border-radius: 12px;
       box-shadow: 0 6px 24px rgba(0,0,0,0.5);
     }
-    .leaflet-popup-tip { background: #0f1923; }
+    .leaflet-popup-tip { background: #fff; }
     .leaflet-popup-close-button {
-      color: #4a6070 !important; font-size: 20px !important;
+      color: #999 !important; font-size: 20px !important;
       width: 28px !important; height: 28px !important;
     }
     .popup-content h4 { color: #e07850; font-size: 0.95rem; margin-bottom: 4px; }
-    .popup-content p { font-size: 0.82rem; margin: 3px 0; color: #8899aa; }
+    .popup-content p { font-size: 0.82rem; margin: 3px 0; color: #666; }
     .popup-content .siege { color: #e63946; font-weight: bold; }
     .popup-content .tag {
-      display: inline-block; background: #1a2733;
+      display: inline-block; background: #ffffff;
       border-radius: 4px; padding: 2px 6px;
       font-size: 0.7rem; color: #e07850; margin-top: 4px;
     }
@@ -437,7 +437,7 @@
     .leaflet-control-zoom a {
       background: rgba(15,25,35,0.92) !important;
       color: #e07850 !important;
-      border-color: #243447 !important;
+      border-color: #e0e0e0 !important;
     }
     .leaflet-control-attribution { display: none !important; }
   </style>
@@ -616,14 +616,14 @@
     <div class="profile-section">
       <h3>Recent Runs</h3>
       <div id="run-history">
-        <div style="text-align:center; color:#4a6070; padding:1rem; font-size:0.85rem;">
+        <div style="text-align:center; color:#999; padding:1rem; font-size:0.85rem;">
           Log in to see your run history
         </div>
       </div>
     </div>
     <div class="profile-cta" id="profile-cta">
       <button class="btn-strava" onclick="window.location.href='/'">Log In / Sign Up</button>
-      <button class="btn-secondary" onclick="handleConnect()" style="margin-top:0.5rem; display:block; width:100%; padding:0.8rem; background:#243447; color:#e0e8f0; border:1px solid #3a5060; border-radius:6px; font-size:0.9rem; cursor:pointer; font-family:inherit;">Sign up with Strava</button>
+      <button class="btn-secondary" onclick="handleConnect()" style="margin-top:0.5rem; display:block; width:100%; padding:0.8rem; background:#e07850; color:#fff; border:none; border-radius:6px; font-size:0.9rem; cursor:pointer; font-family:inherit;">Sign up with Strava</button>
     </div>
   </div>
 
@@ -681,7 +681,7 @@
       attributionControl: false
     }).setView(INDIA_CENTER, INDIA_ZOOM);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19, detectRetina: true
     }).addTo(map);
 
@@ -733,6 +733,10 @@
             isAuthenticated = true;
             userProfile = data.user;
             updateAuthUI();
+            // Center map on user's home city
+            if (data.user.homeCity && data.user.homeCity.lat && data.user.homeCity.lng) {
+              map.setView([data.user.homeCity.lat, data.user.homeCity.lng], 12);
+            }
             return;
           }
         }
@@ -860,7 +864,7 @@
     function updateCityList(cities) {
       var el = document.getElementById('city-list');
       if (!cities || cities.length === 0) {
-        el.innerHTML = '<div style="text-align:center;color:#4a6070;padding:1rem;font-size:0.85rem;">No cities loaded</div>';
+        el.innerHTML = '<div style="text-align:center;color:#999;padding:1rem;font-size:0.85rem;">No cities loaded</div>';
         return;
       }
       el.innerHTML = cities.map(function(c) {
@@ -894,14 +898,14 @@
           }
         } else {
           el.innerHTML = '<div style="text-align:center;padding:1.5rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">\u{1F3C6}</div>' +
-            '<div style="color:#8899aa;font-size:0.9rem;">No runners yet</div>' +
-            '<div style="color:#4a6070;font-size:0.8rem;margin-top:0.25rem;">Be the first Zamindar!</div></div>';
+            '<div style="color:#666;font-size:0.9rem;">No runners yet</div>' +
+            '<div style="color:#999;font-size:0.8rem;margin-top:0.25rem;">Be the first Zamindar!</div></div>';
         }
       } catch (e) {
         var el = document.getElementById('leaderboard');
         el.innerHTML = '<div style="text-align:center;padding:1.5rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">\u{1F3C3}</div>' +
-          '<div style="color:#8899aa;font-size:0.9rem;">Connect Strava to start</div>' +
-          '<div style="color:#4a6070;font-size:0.8rem;margin-top:0.25rem;">Your runs will appear here</div></div>';
+          '<div style="color:#666;font-size:0.9rem;">Connect Strava to start</div>' +
+          '<div style="color:#999;font-size:0.8rem;margin-top:0.25rem;">Your runs will appear here</div></div>';
       }
     }
 
@@ -1360,7 +1364,7 @@
         var el = document.getElementById('run-history');
         var zones = data.zones || [];
         if (zones.length === 0) {
-          el.innerHTML = '<div style="text-align:center; color:#4a6070; padding:1rem; font-size:0.85rem;">No runs yet. Connect Strava and start running!</div>';
+          el.innerHTML = '<div style="text-align:center; color:#999; padding:1rem; font-size:0.85rem;">No runs yet. Connect Strava and start running!</div>';
           return;
         }
         // Show most recent 10
@@ -1374,7 +1378,7 @@
             '<div class="run-area">' + areaKm2 + ' km\u00B2</div></div>';
         }).join('');
       }).catch(function() {
-        document.getElementById('run-history').innerHTML = '<div style="text-align:center; color:#4a6070; padding:1rem; font-size:0.85rem;">Could not load run history.</div>';
+        document.getElementById('run-history').innerHTML = '<div style="text-align:center; color:#999; padding:1rem; font-size:0.85rem;">Could not load run history.</div>';
       });
     }
 
