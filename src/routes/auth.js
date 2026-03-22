@@ -340,6 +340,40 @@ router.get('/me', async (req, res) => {
     }
 });
 
+// ─── PUT /auth/home-city — Set user's home city ─────────────────────────────
+router.put('/home-city', async (req, res) => {
+    try {
+          const authHeader = req.headers.authorization;
+          if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                  return res.status(401).json({ error: 'Not authenticated' });
+          }
+
+      const token = authHeader.replace('Bearer ', '');
+          let decoded;
+          try {
+                  decoded = jwt.verify(token, JWT_SECRET);
+          } catch (e) {
+                  return res.status(401).json({ error: 'Invalid token' });
+          }
+
+      const { homeCityId } = req.body;
+          if (!homeCityId) return res.status(400).json({ error: 'homeCityId required' });
+
+      const { error } = await supabase
+              .from('users')
+              .update({ home_city_id: homeCityId })
+              .eq('id', decoded.userId);
+
+      if (error) throw error;
+
+      const city = await getCityById(homeCityId);
+          res.json({ success: true, homeCity: { id: city.id, name: city.name, lat: parseFloat(city.lat), lng: parseFloat(city.lng) } });
+    } catch (err) {
+          console.error('Set home city error:', err);
+          res.status(500).json({ error: 'Failed to set home city' });
+    }
+});
+
 // ─── DELETE /auth/account — Delete user and all their data ───────────────────
 router.delete('/account', async (req, res) => {
     try {
@@ -495,7 +529,12 @@ router.get('/strava/callback', async (req, res) => {
       });
 
       // Redirect to app with token
-      res.redirect(`/zamindar.html?token=${encodeURIComponent(token)}&user=${user.id}&name=${encodeURIComponent(user.display_name)}`);
+      if (isNewUser) {
+              // New users go to city picker first
+              res.redirect(`/pick-city.html?token=${encodeURIComponent(token)}&user=${user.id}&name=${encodeURIComponent(user.display_name)}`);
+      } else {
+              res.redirect(`/zamindar.html?token=${encodeURIComponent(token)}&user=${user.id}&name=${encodeURIComponent(user.display_name)}`);
+      }
     } catch (err) {
           console.error('Auth callback error:', err);
           res.redirect('/?auth=error&reason=token_exchange');

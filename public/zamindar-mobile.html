@@ -791,7 +791,7 @@
         var data = await res.json();
         territoryLayer.clearLayers();
         if (data.territories && data.territories.length > 0) {
-          var userId = (userProfile && userProfile.strava_id) || null;
+          var userId = (userProfile && userProfile.id) || null;
           data.territories.forEach(function(t) {
             // Apply filter
             if (currentFilter === 'mine' && t.runner_id !== userId) return;
