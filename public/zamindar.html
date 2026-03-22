@@ -416,12 +416,53 @@ function loadLeaderboard() {
     });
 }
 
+var myZonesLayer = L.layerGroup().addTo(map);
+
 function setView(view) {
     document.querySelectorAll('.map-btn').forEach(function(b) { b.classList.remove('active'); });
-    if (view === 'india') { map.setView(INDIA_CENTER, INDIA_ZOOM); }
-    else if (view === 'my') {
-        if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(function(pos) { map.setView([pos.coords.latitude, pos.coords.longitude], 13); }); }
+    if (view === 'india') {
+        map.setView(INDIA_CENTER, INDIA_ZOOM);
+        myZonesLayer.clearLayers();
     }
+    else if (view === 'my') {
+        showMyZones();
+    }
+}
+
+function showMyZones() {
+    if (!currentUser || !currentUser.id) return;
+    fetch(API_BASE + '/zones/user/' + currentUser.id)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var zones = data.zones || [];
+        myZonesLayer.clearLayers();
+        if (zones.length === 0) return;
+        var group = L.featureGroup();
+        zones.forEach(function(z) {
+            if (!z.geom) return;
+            var geom = typeof z.geom === 'string' ? JSON.parse(z.geom) : z.geom;
+            var distKm = z.runs && z.runs.distance_km ? parseFloat(z.runs.distance_km).toFixed(1) : '?';
+            var dateStr = z.created_at ? new Date(z.created_at).toLocaleDateString() : '';
+            var areaKm2 = ((z.area_m2 || 0) / 1000000).toFixed(3);
+            // Bright highlight layer for own zones
+            var layer = L.geoJSON(geom, {
+                style: { color: '#ff6b35', fillColor: '#e07850', fillOpacity: 0.4, weight: 3 }
+            });
+            layer.bindPopup(
+                '<div class="popup-content">' +
+                '<h4>Your Territory</h4>' +
+                '<p>' + distKm + ' km run</p>' +
+                '<p>' + dateStr + '</p>' +
+                '<span style="color:#e07850; font-weight:bold;">' + areaKm2 + ' km\u00B2</span>' +
+                '</div>'
+            );
+            layer.addTo(myZonesLayer);
+            group.addLayer(layer);
+        });
+        if (group.getLayers().length > 0) {
+            map.fitBounds(group.getBounds(), { padding: [60, 60], maxZoom: 16 });
+        }
+    }).catch(function(e) { console.log('My zones error:', e.message); });
 }
 
 function simulateRun() {
