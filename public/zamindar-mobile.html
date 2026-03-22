@@ -733,8 +733,10 @@
             isAuthenticated = true;
             userProfile = data.user;
             updateAuthUI();
-            // Center map on user's home city
-            if (data.user.homeCity && data.user.homeCity.lat && data.user.homeCity.lng) {
+            // Center map on latest run (best), or home city (fallback)
+            if (data.user.lastRunCenter) {
+              map.setView([data.user.lastRunCenter.lat, data.user.lastRunCenter.lng], 14);
+            } else if (data.user.homeCity && data.user.homeCity.lat) {
               map.setView([data.user.homeCity.lat, data.user.homeCity.lng], 12);
             }
             return;

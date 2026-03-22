@@ -319,6 +319,29 @@ router.get('/me', async (req, res) => {
               } catch (e) { /* city may have been deleted */ }
       }
 
+      // Get centroid of most recent zone to center map
+      let lastRunCenter = null;
+      try {
+              const { data: latest } = await supabase
+                      .from('zones')
+                      .select('id, geom')
+                      .eq('user_id', user.id)
+                      .eq('is_active', true)
+                      .order('created_at', { ascending: false })
+                      .limit(1)
+                      .single();
+              if (latest && latest.geom) {
+                      // geom is a GeoJSON from PostGIS — extract centroid from coordinates
+                      const geom = typeof latest.geom === 'string' ? JSON.parse(latest.geom) : latest.geom;
+                      if (geom && geom.coordinates && geom.coordinates[0]) {
+                              const coords = geom.coordinates[0]; // outer ring
+                              let latSum = 0, lngSum = 0;
+                              for (const c of coords) { lngSum += c[0]; latSum += c[1]; }
+                              lastRunCenter = { lat: latSum / coords.length, lng: lngSum / coords.length };
+                      }
+              }
+      } catch (e) { /* no zones yet */ }
+
       res.json({
               user: {
                         id: user.id,
@@ -332,6 +355,7 @@ router.get('/me', async (req, res) => {
                         totalAreaM2: user.total_area_m2,
                         createdAt: user.created_at,
                         homeCity,
+                        lastRunCenter,
               },
       });
     } catch (err) {
