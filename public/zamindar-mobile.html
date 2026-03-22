@@ -1366,13 +1366,20 @@
 
     // ── Run History ──
     var userZoneGeoms = []; // cached for fly-to
+    var highlightLayer = L.layerGroup().addTo(map);
 
     function flyToZone(idx) {
       var z = userZoneGeoms[idx];
       if (!z) return;
       try {
         var geom = typeof z === 'string' ? JSON.parse(z) : z;
-        var layer = L.geoJSON(geom);
+        highlightLayer.clearLayers();
+        // Render the zone directly so it's always visible
+        var layer = L.geoJSON(geom, {
+          style: { color: '#ff6b35', fillColor: '#e07850', fillOpacity: 0.45, weight: 4 }
+        });
+        layer.bindPopup('<div class="popup-content"><h4>Your Territory</h4></div>').openPopup();
+        layer.addTo(highlightLayer);
         map.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 16 });
         // Collapse bottom sheet so the map is visible
         var sheet = document.getElementById('bottom-sheet');
@@ -1382,11 +1389,16 @@
 
     function flyToMyZones() {
       if (userZoneGeoms.length === 0) return;
+      highlightLayer.clearLayers();
       var group = L.featureGroup();
       userZoneGeoms.forEach(function(z) {
         try {
           var geom = typeof z === 'string' ? JSON.parse(z) : z;
-          group.addLayer(L.geoJSON(geom));
+          var layer = L.geoJSON(geom, {
+            style: { color: '#ff6b35', fillColor: '#e07850', fillOpacity: 0.4, weight: 3 }
+          });
+          layer.addTo(highlightLayer);
+          group.addLayer(layer);
         } catch (e) {}
       });
       if (group.getLayers().length > 0) {
