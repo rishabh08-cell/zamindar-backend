@@ -9,6 +9,19 @@ const {
   getRecentActivity,
   getAreaLeaderboard,
 } = require('../db/zones');
+const wkx = require('wkx');
+
+/** Convert a PostGIS geometry (WKB hex or GeoJSON) to a GeoJSON object */
+function toGeoJSON(geom) {
+  if (!geom) return null;
+  if (typeof geom === 'object' && geom.type) return geom; // already GeoJSON
+  if (typeof geom === 'string') {
+    // Could be WKB hex or GeoJSON string
+    if (geom.startsWith('{')) return JSON.parse(geom);
+    try { return wkx.Geometry.parse(Buffer.from(geom, 'hex')).toGeoJSON(); } catch (e) { return null; }
+  }
+  return null;
+}
 
 // GET /zones?bbox=west,south,east,north
 router.get('/', async (req, res) => {
@@ -81,10 +94,12 @@ router.get('/activity', async (req, res) => {
 router.get('/user/:userId', async (req, res) => {
   try {
     const zones = await getZonesByUser(req.params.userId);
-    const totalArea = (zones || []).reduce((sum, z) => sum + (z.area_m2 || 0), 0);
+    // Convert WKB hex geom to GeoJSON so the frontend can render it
+    const converted = (zones || []).map(z => ({ ...z, geom: toGeoJSON(z.geom) }));
+    const totalArea = converted.reduce((sum, z) => sum + (z.area_m2 || 0), 0);
     res.json({
-      zones: zones || [],
-      count: (zones || []).length,
+      zones: converted,
+      count: converted.length,
       total_area_m2: totalArea,
       total_area_km2: (totalArea / 1000000).toFixed(3),
     });

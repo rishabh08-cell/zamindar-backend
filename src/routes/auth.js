@@ -8,6 +8,7 @@ const { upsertStravaConnection, getConnectionByStravaId, getConnectionByUserId, 
 const { processStravaActivity } = require('../lib/stravaProcessor');
 const { supabase } = require('../db/client');
 const { getAllCities, getCityById } = require('../db/cities');
+const wkx = require('wkx');
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
@@ -324,17 +325,22 @@ router.get('/me', async (req, res) => {
       try {
               const { data: latest } = await supabase
                       .from('zones')
-                      .select('id, geom')
+                      .select('geom')
                       .eq('user_id', user.id)
                       .eq('is_active', true)
                       .order('created_at', { ascending: false })
                       .limit(1)
                       .single();
               if (latest && latest.geom) {
-                      // geom is a GeoJSON from PostGIS — extract centroid from coordinates
-                      const geom = typeof latest.geom === 'string' ? JSON.parse(latest.geom) : latest.geom;
+                      // Parse WKB hex from PostGIS to GeoJSON
+                      let geom = latest.geom;
+                      if (typeof geom === 'string' && !geom.startsWith('{')) {
+                              geom = wkx.Geometry.parse(Buffer.from(geom, 'hex')).toGeoJSON();
+                      } else if (typeof geom === 'string') {
+                              geom = JSON.parse(geom);
+                      }
                       if (geom && geom.coordinates && geom.coordinates[0]) {
-                              const coords = geom.coordinates[0]; // outer ring
+                              const coords = geom.coordinates[0];
                               let latSum = 0, lngSum = 0;
                               for (const c of coords) { lngSum += c[0]; latSum += c[1]; }
                               lastRunCenter = { lat: latSum / coords.length, lng: lngSum / coords.length };
