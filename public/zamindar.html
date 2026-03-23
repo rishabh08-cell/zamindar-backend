@@ -439,8 +439,15 @@ function showMyZones() {
         if (zones.length === 0) return;
         var group = L.featureGroup();
         zones.forEach(function(z) {
-            if (!z.geom) return;
-            var geom = typeof z.geom === 'string' ? JSON.parse(z.geom) : z.geom;
+            if (!z.geom) { console.log('Zone missing geom:', z.id); return; }
+            var geom;
+            try {
+                geom = typeof z.geom === 'string' ? JSON.parse(z.geom) : z.geom;
+            } catch (e) {
+                console.log('Zone geom not valid GeoJSON (likely WKB hex):', z.id, typeof z.geom, String(z.geom).substring(0, 40));
+                return;
+            }
+            if (!geom || !geom.type) { console.log('Zone geom has no type:', z.id, geom); return; }
             var distKm = z.runs && z.runs.distance_km ? parseFloat(z.runs.distance_km).toFixed(1) : '?';
             var dateStr = z.created_at ? new Date(z.created_at).toLocaleDateString() : '';
             var areaKm2 = ((z.area_m2 || 0) / 1000000).toFixed(3);
