@@ -1373,6 +1373,7 @@
       if (!z) return;
       try {
         var geom = typeof z === 'string' ? JSON.parse(z) : z;
+        if (!geom || !geom.type) { console.log('flyToZone: geom has no type', idx, geom); return; }
         highlightLayer.clearLayers();
         // Render the zone directly so it's always visible
         var layer = L.geoJSON(geom, {
