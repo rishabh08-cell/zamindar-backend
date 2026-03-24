@@ -789,8 +789,8 @@
     async function loadTerritories() {
       try {
         var b = map.getBounds();
-        var res = await fetch(API_BASE + '/map/territories?bbox=' +
-          b.getWest() + ',' + b.getSouth() + ',' + b.getEast() + ',' + b.getNorth());
+        var res = await fetch(API_BASE + '/api/map/territories?bbox=' +
+          b.getWest() + ',' + b.getSouth() + ',' + b.getEast() + ',' + b.getNorth(), { headers: authHeaders() });
         if (!res.ok) return;
         var data = await res.json();
         territoryLayer.clearLayers();
@@ -838,7 +838,7 @@
 
     async function loadCities() {
       try {
-        var res = await fetch(API_BASE + '/map/cities');
+        var res = await fetch(API_BASE + '/api/map/cities', { headers: authHeaders() });
         if (!res.ok) return;
         var data = await res.json();
         cityLayer.clearLayers();
@@ -886,7 +886,7 @@
 
     async function loadLeaderboard() {
       try {
-        var res = await fetch(API_BASE + '/map/leaderboard');
+        var res = await fetch(API_BASE + '/api/map/leaderboard', { headers: authHeaders() });
         if (!res.ok) throw new Error('Failed');
         var data = await res.json();
         var el = document.getElementById('leaderboard');
@@ -1410,7 +1410,7 @@
     function loadRunHistory() {
       if (!isAuthenticated || !userProfile) return;
       var userId = userProfile.id;
-      fetch(API_BASE + '/zones/user/' + userId)
+      fetch(API_BASE + '/api/zones/user/' + userId, { headers: authHeaders() })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var el = document.getElementById('run-history');
