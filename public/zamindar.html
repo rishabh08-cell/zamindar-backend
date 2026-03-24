@@ -366,8 +366,8 @@ function hashCode(str) { var hash = 0; for (var i = 0; i < str.length; i++) { ha
 
 function loadTerritories(bounds) {
     var b = bounds || map.getBounds();
-    var url = API_BASE + '/map/territories?bbox=' + b.getWest() + ',' + b.getSouth() + ',' + b.getEast() + ',' + b.getNorth();
-    fetch(url).then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
+    var url = API_BASE + '/api/map/territories?bbox=' + b.getWest() + ',' + b.getSouth() + ',' + b.getEast() + ',' + b.getNorth();
+    fetch(url, { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
         if (!data) return;
         territoryLayer.clearLayers();
         if (data.territories) {
@@ -386,7 +386,7 @@ function loadTerritories(bounds) {
 }
 
 function loadCities() {
-    fetch(API_BASE + '/map/cities').then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
+    fetch(API_BASE + '/api/map/cities', { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
         if (!data) return;
         cityLayer.clearLayers();
         if (data.cities) {
@@ -401,7 +401,7 @@ function loadCities() {
 }
 
 function loadLeaderboard() {
-    fetch(API_BASE + '/map/leaderboard').then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
+    fetch(API_BASE + '/api/map/leaderboard', { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
         if (!data) return;
         var el = document.getElementById('leaderboard');
         if (data.leaderboard && data.leaderboard.length > 0) {
@@ -431,7 +431,7 @@ function setView(view) {
 
 function showMyZones() {
     if (!currentUser || !currentUser.id) return;
-    fetch(API_BASE + '/zones/user/' + currentUser.id)
+    fetch(API_BASE + '/api/zones/user/' + currentUser.id, { headers: authHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(data) {
         var zones = data.zones || [];
