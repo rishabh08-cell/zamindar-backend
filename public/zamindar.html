@@ -430,7 +430,7 @@ function setView(view) {
 }
 
 function showMyZones() {
-    if (!currentUser || !currentUser.id) return;
+    if (!currentUser || !currentUser.id) { document.getElementById('auth-loggedout').scrollIntoView({behavior:'smooth'}); return; }
     fetch(API_BASE + '/api/zones/user/' + currentUser.id, { headers: authHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(data) {
