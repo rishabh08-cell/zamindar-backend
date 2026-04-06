@@ -316,6 +316,7 @@ function logout() {
         fetch(API_BASE + '/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } }).catch(function(){});
     }
     clearAuth();
+    window.location.reload();
 }
 
 function linkStrava() {
