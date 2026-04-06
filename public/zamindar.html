@@ -406,7 +406,7 @@ function loadLeaderboard() {
         var el = document.getElementById('leaderboard');
         if (data.leaderboard && data.leaderboard.length > 0) {
             el.innerHTML = data.leaderboard.map(function(r, i) {
-                return '<div class="leaderboard-item"><span class="runner-name">' + (i+1) + '. ' + (r.display_name || r.name) + '</span><span class="runner-score">' + (r.zones_owned || 0) + ' ' + LABELS.zoneUnit + '</span></div>';
+                return '<div class="leaderboard-item"><span class="runner-name">' + (i+1) + '. ' + (r.display_name || r.name) + '</span><span class="runner-score">' + (r.zones_owned || r.zone_count || 0) + ' ' + LABELS.zoneUnit + '</span></div>';
             }).join('');
         } else {
             el.innerHTML = '<div class="leaderboard-item"><span class="runner-name">No runners yet. Be the first!</span></div>';
