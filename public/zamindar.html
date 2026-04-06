@@ -1,705 +1,763 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Zamindar - Territory Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Tiro Devanagari Hindi', Georgia, serif; background: #f5f5f5; }
-        #map { position: absolute; top: 0; left: 0; right: 320px; bottom: 0; z-index: 1; }
-        .leaflet-tile-pane { /* light tiles — no filter needed */ }
-        .side-panel { position: absolute; top: 0; right: 0; width: 320px; bottom: 0; background: #fff; color: #1a1a2e; overflow-y: auto; border-left: 2px solid #e0e0e0; z-index: 2; }
-        .panel-header { padding: 1.5rem; border-bottom: 1px solid #e0e0e0; background: linear-gradient(135deg, #fff, #f5f5f5); }
-        .panel-header h1 { color: #e07850; font-size: 1.8rem; }
-        .panel-header p { color: #666; font-size: 0.85rem; margin-top: 0.25rem; }
-        .panel-section { padding: 1rem 1.5rem; border-bottom: 1px solid #ffffff; }
-        .panel-section h3 { color: #e89070; font-size: 1rem; margin-bottom: 0.75rem; }
-        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #ffffff; }
-        .leaderboard-item:last-child { border: none; }
-        .runner-name { color: #1a1a2e; font-size: 0.9rem; }
-        .runner-score { color: #e07850; font-weight: bold; font-size: 0.9rem; }
-        .btn-strava { display: block; width: 100%; padding: 0.8rem; margin-top: 0.5rem; background: #d06a45; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-family: inherit; }
-        .btn-strava:hover { background: #c06040; }
-        .btn-secondary { display: block; width: 100%; padding: 0.6rem; margin-top: 0.5rem; background: #f0f0f0; color: #1a1a2e; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-family: inherit; }
-        .btn-secondary:hover { background: #e0e0e0; }
-        .btn-danger { display: block; width: 100%; padding: 0.6rem; margin-top: 0.5rem; background: transparent; color: #cc4444; border: 1px solid #cc4444; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
-        .btn-danger:hover { background: #cc4444; color: #fff; }
-        .map-controls { position: absolute; top: 10px; left: 60px; z-index: 1000; display: flex; gap: 6px; }
-        .map-btn { padding: 8px 14px; background: #fff; color: #e07850; border: 1px solid #e07850; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: inherit; }
-        .map-btn:hover, .map-btn.active { background: #e07850; color: #fff; }
-        .city-marker { background: #fff; border: 2px solid #e07850; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #e07850; }
-        .fomo-banner { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #fff, #f5f5f5); border: 1px solid #e07850; border-radius: 10px; padding: 1rem 1.5rem; color: #1a1a2e; text-align: center; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none; }
-        .fomo-banner h4 { color: #e07850; margin-bottom: 0.25rem; }
-        .fomo-banner p { font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; }
-        .fomo-close { position: absolute; top: 6px; right: 10px; background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; }
-        .user-profile { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #e07850; }
-        .user-name { color: #e07850; font-size: 1rem; font-weight: bold; }
-        .user-stats { font-size: 0.8rem; color: #666; }
-        .popup-content h4 { color: #e07850; margin-bottom: 4px; }
-        .popup-content p { font-size: 0.85rem; color: #333; margin: 2px 0; }
-        .popup-content .siege { color: #cc0000; font-weight: bold; }
-        .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; }
-        .confirm-overlay.active { display: flex; }
-        .confirm-box { background: #ffffff; border: 1px solid #e07850; border-radius: 10px; padding: 1.5rem; max-width: 360px; width: 90%; text-align: center; }
-        .confirm-box h3 { color: #e07850; margin-bottom: 0.5rem; }
-        .confirm-box p { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
-        .confirm-box .btn-row { display: flex; gap: 0.5rem; }
-        .confirm-box .btn-row button { flex: 1; }
-        /* Community (Biradari) */
-        .community-tabs { display: flex; gap: 0; border-bottom: 1px solid #e0e0e0; margin-bottom: 0.75rem; }
-        .community-tab { flex: 1; padding: 0.5rem 0; text-align: center; font-size: 0.8rem; color: #5a7080; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit; }
-        .community-tab.active { color: #e07850; border-bottom-color: #e07850; }
-        .community-tab:hover { color: #e89070; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .social-card { background: #ffffff; border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
-        .social-card-info { display: flex; align-items: center; gap: 0.5rem; }
-        .social-card-name { color: #1a1a2e; font-size: 0.85rem; }
-        .social-card-sub { color: #5a7080; font-size: 0.7rem; }
-        .social-card-actions { display: flex; gap: 0.25rem; }
-        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-family: inherit; border: none; }
-        .btn-sm-primary { background: #e07850; color: #fff; }
-        .btn-sm-primary:hover { background: #c06040; }
-        .btn-sm-ghost { background: none; color: #666; border: 1px solid #e0e0e0; }
-        .btn-sm-ghost:hover { background: #e0e0e0; }
-        .btn-sm-danger { background: none; color: #cc4444; border: 1px solid #cc4444; }
-        .btn-sm-danger:hover { background: #cc4444; color: #fff; }
-        .social-empty { color: #5a7080; font-size: 0.8rem; text-align: center; padding: 1rem 0; }
-        .fauj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
-        .fauj-title { color: #e89070; font-size: 1rem; font-weight: bold; }
-        .fauj-badge { display: inline-block; background: #e07850; color: #fff; font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 10px; font-weight: bold; }
-        .duel-status { font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 10px; }
-        .duel-pending { background: #3a5060; color: #e9c46a; }
-        .duel-accepted { background: #2a4d3e; color: #2a9d8f; }
-        .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
-        .input-sm { flex: 1; padding: 0.4rem 0.6rem; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px; color: #1a1a2e; font-size: 0.8rem; font-family: inherit; }
-        .input-sm::placeholder { color: #3a5060; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Zamindar — Territory Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0b0f1a;
+      --panel: #111827;
+      --border: #1e2d40;
+      --accent: #00e5a0;
+      --accent2: #00c8ff;
+      --text: #f0f4ff;
+      --muted: #7b8db0;
+      --danger: #ff4d6d;
+      --strava: #fc4c02;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Space Grotesk', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1.5rem;
+      background: rgba(11,15,26,0.9); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+    }
+    .nav-logo {
+      font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.08em; text-decoration: none;
+    }
+    .nav-right { display: flex; gap: 0.6rem; align-items: center; }
+    .nav-link { color: var(--muted); font-size: 0.85rem; text-decoration: none; transition: color .2s; }
+    .nav-link:hover { color: var(--text); }
+    .nav-user-chip {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.2);
+      border-radius: 100px; padding: 0.3rem 0.75rem 0.3rem 0.4rem;
+      font-size: 0.82rem; color: var(--text);
+    }
+    .nav-avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 1px solid var(--accent); object-fit: cover;
+    }
+    .nav-cta {
+      padding: 0.4rem 1rem; border-radius: 6px;
+      background: var(--accent); color: #0b0f1a;
+      font-weight: 700; font-size: 0.82rem; text-decoration: none; transition: opacity .2s;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── LAYOUT ── */
+    .app-layout {
+      position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
+      display: flex;
+    }
+    #map { flex: 1; z-index: 1; }
+
+    /* ── SIDE PANEL ── */
+    .side-panel {
+      width: 300px; flex-shrink: 0;
+      background: var(--panel); border-left: 1px solid var(--border);
+      overflow-y: auto; z-index: 2;
+      display: flex; flex-direction: column;
+    }
+    .side-panel::-webkit-scrollbar { width: 4px; }
+    .side-panel::-webkit-scrollbar-track { background: transparent; }
+    .side-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── PANEL SECTIONS ── */
+    .panel-section {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem;
+    }
+
+    /* ── AUTH STATE ── */
+    .user-profile { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .user-avatar-lg {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 2px solid var(--accent); object-fit: cover; flex-shrink: 0;
+    }
+    .user-name { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+    .user-stats { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .stat-pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.15);
+      border-radius: 100px; padding: 0.25rem 0.65rem;
+      font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--accent);
+    }
+
+    /* ── BUTTONS ── */
+    .btn { display: block; width: 100%; padding: 0.65rem 1rem; border-radius: 8px; border: none; font-size: 0.88rem; font-weight: 600; font-family: 'Space Grotesk', sans-serif; cursor: pointer; text-align: center; text-decoration: none; transition: opacity .2s, transform .15s; }
+    .btn + .btn { margin-top: 0.5rem; }
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #0b0f1a; }
+    .btn-strava { background: var(--strava); color: #fff; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .btn-strava svg { width: 16px; height: 16px; fill: white; flex-shrink: 0; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); transform: none; opacity: 1; }
+    .btn-danger-ghost { background: transparent; border: 1px solid transparent; color: var(--danger); font-size: 0.8rem; padding: 0.4rem; }
+    .btn-danger-ghost:hover { border-color: var(--danger); transform: none; }
+
+    /* ── LEADERBOARD ── */
+    .lb-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.5rem 0; border-bottom: 1px solid rgba(30,45,64,0.5);
+    }
+    .lb-item:last-child { border: none; }
+    .lb-rank { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); width: 18px; text-align: center; flex-shrink: 0; }
+    .lb-rank.gold { color: #ffd700; }
+    .lb-avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: #0b0f1a; }
+    .lb-name { flex: 1; font-size: 0.85rem; font-weight: 500; }
+    .lb-score { font-family: 'Space Mono', monospace; font-size: 0.78rem; color: var(--accent); }
+
+    /* ── MAP CONTROLS ── */
+    .map-controls-panel { display: flex; flex-direction: column; gap: 0.4rem; }
+    .map-ctrl-btn {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.6rem 0.85rem; border-radius: 8px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.85rem; font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer; transition: all .2s; text-align: left; width: 100%;
+    }
+    .map-ctrl-btn:hover { border-color: var(--accent); color: var(--text); background: rgba(0,229,160,0.05); }
+    .map-ctrl-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,160,0.08); }
+    .map-ctrl-btn .ctrl-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    /* ── FLOATING MAP BUTTONS ── */
+    .map-float-controls {
+      position: absolute; top: 64px; left: 10px; z-index: 900;
+      display: flex; gap: 6px;
+    }
+    .mf-btn {
+      padding: 6px 14px; border-radius: 6px;
+      background: rgba(11,15,26,0.9); backdrop-filter: blur(8px);
+      color: var(--muted); border: 1px solid var(--border);
+      font-size: 0.78rem; font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer; transition: all .2s;
+    }
+    .mf-btn:hover, .mf-btn.active { border-color: var(--accent); color: var(--accent); }
+
+    /* ── COMMUNITY TABS ── */
+    .comm-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0.75rem; }
+    .comm-tab {
+      flex: 1; padding: 0.5rem 0; text-align: center; font-size: 0.78rem; font-weight: 600;
+      color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: all .2s;
+    }
+    .comm-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .comm-tab:hover { color: var(--text); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── SOCIAL CARDS ── */
+    .social-card {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 0.7rem; border-radius: 8px; margin-bottom: 0.4rem;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    }
+    .social-card-info { display: flex; align-items: center; gap: 0.5rem; }
+    .social-card-name { font-size: 0.83rem; font-weight: 500; }
+    .social-card-sub { font-size: 0.7rem; color: var(--muted); }
+    .social-card-actions { display: flex; gap: 0.3rem; }
+    .social-empty { color: var(--muted); font-size: 0.8rem; text-align: center; padding: 0.75rem 0; }
+    .btn-sm { padding: 0.25rem 0.55rem; font-size: 0.7rem; border-radius: 5px; cursor: pointer; font-family: 'Space Grotesk', sans-serif; border: none; font-weight: 600; }
+    .btn-sm-primary { background: var(--accent); color: #0b0f1a; }
+    .btn-sm-ghost { background: none; color: var(--muted); border: 1px solid var(--border); }
+    .btn-sm-ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+    .btn-sm-danger { background: none; color: var(--danger); border: 1px solid var(--danger); }
+    .btn-sm-danger:hover { background: var(--danger); color: #fff; }
+
+    .input-row { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
+    .input-sm {
+      flex: 1; padding: 0.4rem 0.65rem;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 0.8rem;
+      font-family: 'Space Grotesk', sans-serif; outline: none;
+    }
+    .input-sm:focus { border-color: var(--accent); }
+    .input-sm::placeholder { color: var(--muted); opacity: 0.6; }
+
+    .fauj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .fauj-title { font-weight: 700; font-size: 0.9rem; }
+    .fauj-badge { background: var(--accent); color: #0b0f1a; font-size: 0.65rem; padding: 0.15rem 0.45rem; border-radius: 10px; font-weight: 700; }
+    .duel-status { font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 8px; }
+    .duel-pending { background: rgba(255,200,0,0.15); color: #ffc800; }
+    .duel-accepted { background: rgba(0,229,160,0.15); color: var(--accent); }
+
+    /* ── CITY MARKER ── */
+    .city-marker {
+      background: var(--panel); border: 2px solid var(--accent);
+      border-radius: 50%; width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: var(--accent); font-weight: 700;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ── LEAFLET OVERRIDES ── */
+    .leaflet-popup-content-wrapper {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .leaflet-popup-tip { background: var(--panel); }
+    .leaflet-popup-close-button { color: var(--muted) !important; }
+    .popup-content h4 { color: var(--accent); font-size: 0.9rem; margin-bottom: 4px; font-family: 'Space Grotesk', sans-serif; }
+    .popup-content p { font-size: 0.82rem; color: var(--muted); margin: 2px 0; }
+    .popup-content .siege { color: var(--danger); font-weight: 700; }
+    .leaflet-bar a { background: var(--panel) !important; color: var(--text) !important; border-color: var(--border) !important; }
+    .leaflet-bar a:hover { background: rgba(0,229,160,0.1) !important; color: var(--accent) !important; }
+
+    /* ── FOMO BANNER ── */
+    .fomo-banner {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 900;
+      background: var(--panel); border: 1px solid var(--accent);
+      border-radius: 12px; padding: 1rem 1.25rem;
+      color: var(--text); text-align: center; max-width: 380px; width: 90%;
+      box-shadow: 0 0 30px rgba(0,229,160,0.15), 0 8px 32px rgba(0,0,0,0.5);
+      display: none;
+    }
+    .fomo-banner h4 { color: var(--accent); font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .fomo-banner p { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .fomo-close { position: absolute; top: 8px; right: 12px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.1rem; line-height: 1; }
+
+    /* ── CONFIRM OVERLAY ── */
+    .confirm-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    .confirm-overlay.active { display: flex; }
+    .confirm-box {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.75rem; max-width: 340px; width: 90%; text-align: center;
+    }
+    .confirm-box h3 { color: var(--danger); font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .confirm-box p { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.25rem; line-height: 1.5; }
+    .confirm-box .btn-row { display: flex; gap: 0.5rem; }
+    .confirm-box .btn-row button { flex: 1; }
+
+    /* ── DIVIDER ── */
+    .divider { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.75rem; margin: 0.5rem 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  </style>
 </head>
 <body>
-<div id="map"></div>
-<div class="side-panel">
-    <div class="panel-header">
-        <h1 id="lbl-app-name">Zamindar</h1>
-        <p id="lbl-app-tagline">India's Running Territory Game</p>
+
+  <!-- NAV -->
+  <nav>
+    <a href="/" class="nav-logo">ZAMINDAR</a>
+    <div class="nav-right" id="nav-right">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/" class="nav-cta" id="nav-login-btn">Log In</a>
     </div>
-    <div class="panel-section" id="auth-section">
-        <div id="auth-loggedout">
-            <h3>Join the Game</h3>
-            <p style="font-size:0.85rem; color:#666; margin-bottom:0.5rem;">Create an account or log in to claim territory with every run.</p>
-            <button class="btn-strava" onclick="window.location.href='/'">Log In / Sign Up</button>
-            <div style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;"><div style="flex:1; height:1px; background:#e0e0e0;"></div><span style="color:#5a7080; font-size:0.8rem;">or</span><div style="flex:1; height:1px; background:#e0e0e0;"></div></div>
-            <button class="btn-secondary" onclick="window.location.href='/auth/strava'">Sign up with Strava</button>
-        </div>
-        <div id="auth-loggedin" style="display:none;">
-            <div class="user-profile">
-                <img id="user-avatar" class="user-avatar" src="" alt="avatar">
-                <div>
-                    <div id="user-name" class="user-name"></div>
-                    <div id="user-stats" class="user-stats"></div>
-                </div>
-            </div>
-            <button class="btn-strava" id="btn-connect-strava" onclick="linkStrava()" style="display:none;">Connect Strava</button>
-            <button class="btn-secondary" id="btn-disconnect-strava" onclick="disconnectStrava()" style="display:none;">Disconnect Strava</button>
-            <button class="btn-secondary" onclick="logout()">Log Out</button>
-            <button class="btn-danger" onclick="showDeleteConfirm()">Delete My Account</button>
-        </div>
+  </nav>
+
+  <!-- APP LAYOUT -->
+  <div class="app-layout">
+    <!-- MAP -->
+    <div id="map"></div>
+
+    <!-- FLOATING CONTROLS ON MAP -->
+    <div class="map-float-controls">
+      <button class="mf-btn active" id="lbl-india-btn" onclick="setView('india')">India</button>
+      <button class="mf-btn" id="lbl-my-land-btn" onclick="setView('my')">My Zameen</button>
+      <button class="mf-btn" onclick="simulateRun()">Simulate Run</button>
     </div>
-    <div class="panel-section">
-        <h3 id="lbl-leaderboard-title">Top Zamindars</h3>
+
+    <!-- SIDE PANEL -->
+    <div class="side-panel">
+
+      <!-- AUTH: LOGGED OUT -->
+      <div class="panel-section" id="auth-loggedout">
+        <div class="section-label">Join the Game</div>
+        <p style="font-size:0.82rem; color:var(--muted); margin-bottom:0.85rem; line-height:1.5;">
+          Create an account or log in to claim territory with every run.
+        </p>
+        <a href="/" class="btn btn-primary">Log In / Sign Up</a>
+        <div class="divider">or</div>
+        <a href="/auth/strava" class="btn btn-strava">
+          <svg viewBox="0 0 24 24"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+          Sign up with Strava
+        </a>
+      </div>
+
+      <!-- AUTH: LOGGED IN -->
+      <div class="panel-section" id="auth-loggedin" style="display:none;">
+        <div class="user-profile">
+          <img id="user-avatar" class="user-avatar-lg" src="" alt="avatar">
+          <div>
+            <div id="user-name" class="user-name"></div>
+            <div id="user-stats" class="user-stats"></div>
+          </div>
+        </div>
+        <div style="margin-bottom:0.75rem;">
+          <span class="stat-pill" id="stat-pill-zones">0 zones</span>
+        </div>
+        <button class="btn btn-strava" id="btn-connect-strava" onclick="linkStrava()" style="display:none;">
+          <svg viewBox="0 0 24 24"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+          Connect Strava
+        </button>
+        <button class="btn btn-ghost" id="btn-disconnect-strava" onclick="disconnectStrava()" style="display:none;">Disconnect Strava</button>
+        <button class="btn btn-ghost" onclick="logout()" style="margin-top:0.5rem;">Log Out</button>
+        <button class="btn btn-danger-ghost" onclick="showDeleteConfirm()">Delete Account</button>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div class="panel-section">
+        <div class="section-label" id="lbl-leaderboard-title">Top Zamindars</div>
         <div id="leaderboard">
-            <div class="leaderboard-item"><span class="runner-name">Loading...</span></div>
+          <div class="lb-item"><span class="lb-name" style="color:var(--muted)">Loading...</span></div>
         </div>
-    </div>
-    <div class="panel-section" id="community-section" style="display:none;">
-        <h3 id="lbl-community-title">Biradari (Community)</h3>
-        <div class="community-tabs">
-            <button class="community-tab active" id="lbl-tab-friends" onclick="switchTab('dost')">Dost</button>
-            <button class="community-tab" id="lbl-tab-team" onclick="switchTab('fauj')">Fauj</button>
-            <button class="community-tab" id="lbl-tab-duel" onclick="switchTab('dwandva')">Dwandva</button>
+      </div>
+
+      <!-- COMMUNITY -->
+      <div class="panel-section" id="community-section" style="display:none;">
+        <div class="section-label" id="lbl-community-title">Biradari</div>
+        <div class="comm-tabs">
+          <button class="comm-tab active" id="lbl-tab-friends" onclick="switchTab('dost')">Dost</button>
+          <button class="comm-tab" id="lbl-tab-team" onclick="switchTab('fauj')">Fauj</button>
+          <button class="comm-tab" id="lbl-tab-duel" onclick="switchTab('dwandva')">Dwandva</button>
         </div>
-        <!-- DOST (Friends) Tab -->
         <div class="tab-content active" id="tab-dost">
-            <div id="dost-list"><div class="social-empty">Loading...</div></div>
-            <div style="margin-top:0.5rem;">
-                <button class="btn-sm btn-sm-ghost" onclick="toggleDostRequests()" style="width:100%; margin-bottom:0.5rem;">Pending Requests <span id="dost-req-count"></span></button>
-                <div id="dost-requests" style="display:none;"></div>
-            </div>
+          <div id="dost-list"><div class="social-empty">Loading...</div></div>
+          <div style="margin-top:0.5rem;">
+            <button class="btn-sm btn-sm-ghost" onclick="toggleDostRequests()" style="width:100%; padding:0.4rem;">Pending Requests <span id="dost-req-count"></span></button>
+            <div id="dost-requests" style="display:none; margin-top:0.4rem;"></div>
+          </div>
         </div>
-        <!-- FAUJ (Army) Tab -->
         <div class="tab-content" id="tab-fauj">
-            <div id="fauj-content"><div class="social-empty">Loading...</div></div>
+          <div id="fauj-content"><div class="social-empty">Loading...</div></div>
         </div>
-        <!-- DWANDVA (Duel) Tab -->
         <div class="tab-content" id="tab-dwandva">
-            <div id="dwandva-content"><div class="social-empty">Loading...</div></div>
+          <div id="dwandva-content"><div class="social-empty">Loading...</div></div>
         </div>
-    </div>
-    <div class="panel-section">
-        <h3>Map Controls</h3>
-        <div style="display:flex; flex-direction:column; gap:0.5rem;">
-            <button class="map-btn active" id="lbl-india-view" onclick="setView('india')">India View</button>
-            <button class="map-btn" id="lbl-my-land" onclick="setView('my')">My Zameen</button>
-            <button class="map-btn" onclick="simulateRun()">Simulate Run</button>
+      </div>
+
+      <!-- MAP CONTROLS -->
+      <div class="panel-section">
+        <div class="section-label">Map Controls</div>
+        <div class="map-controls-panel">
+          <button class="map-ctrl-btn active" id="lbl-india-view" onclick="setView('india')">
+            <span class="ctrl-icon">🗺️</span> India View
+          </button>
+          <button class="map-ctrl-btn" id="lbl-my-land" onclick="setView('my')">
+            <span class="ctrl-icon">📍</span> My Zameen
+          </button>
+          <button class="map-ctrl-btn" onclick="simulateRun()">
+            <span class="ctrl-icon">🏃</span> Simulate Run
+          </button>
         </div>
-    </div>
-</div>
-<div class="map-controls">
-    <button class="map-btn active" id="lbl-india-btn" onclick="setView('india')">India</button>
-    <button class="map-btn" id="lbl-my-land-btn" onclick="setView('my')">My Zameen</button>
-    <button class="map-btn" onclick="simulateRun()">Simulate Run</button>
-</div>
-<div class="fomo-banner" id="fomo-banner">
+      </div>
+
+    </div><!-- /side-panel -->
+  </div><!-- /app-layout -->
+
+  <!-- FOMO BANNER -->
+  <div class="fomo-banner" id="fomo-banner">
     <button class="fomo-close" onclick="closeFomo()">&times;</button>
     <h4 id="lbl-fomo-title">3 runners claimed territory near you today</h4>
     <p id="lbl-fomo-text">Log in or sign up to defend your zameen before the 48hr siege expires.</p>
-    <button class="btn-strava" onclick="window.location.href='/'" style="margin-top:0.5rem;">Log In / Sign Up</button>
-</div>
-<div class="confirm-overlay" id="delete-confirm">
+    <a href="/" class="btn btn-primary" style="max-width:220px; margin:0 auto;">Log In / Sign Up</a>
+  </div>
+
+  <!-- DELETE CONFIRM -->
+  <div class="confirm-overlay" id="delete-confirm">
     <div class="confirm-box">
-        <h3>Delete Account?</h3>
-        <p>This will permanently delete your account, all territory claims, and disconnect Strava. This cannot be undone.</p>
-        <div class="btn-row">
-            <button class="btn-secondary" onclick="hideDeleteConfirm()">Cancel</button>
-            <button class="btn-danger" onclick="deleteAccount()" id="delete-btn">Delete</button>
-        </div>
+      <h3>Delete Account?</h3>
+      <p>This will permanently delete your account, all territory claims, and disconnect Strava. This cannot be undone.</p>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="hideDeleteConfirm()">Cancel</button>
+        <button class="btn btn-danger-ghost" onclick="deleteAccount()" id="delete-btn" style="border:1px solid var(--danger);">Delete</button>
+      </div>
     </div>
-</div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-var API_BASE = window.location.origin;
-var INDIA_CENTER = [22.5, 78.9];
-var INDIA_ZOOM = 5;
+  </div>
 
-// ─── LABELS CONFIG ──────────────────────────────────────────────────────────
-// Change product names & terminology in one place.
-var LABELS = {
-    appName:        'Zamindar',
-    appTagline:     "India's Running Territory Game",
-    pageTitle:      'Zamindar - Territory Map',
-    leaderboard:    'Top Zamindars',
-    community:      'Biradari (Community)',
-    tabFriends:     'Dost',
-    tabTeam:        'Fauj',
-    tabDuel:        'Dwandva',
-    indiaView:      'India View',
-    indiaBtn:       'India',
-    myLand:         'My Zameen',
-    fomoTitle:      '3 runners claimed territory near you today',
-    fomoText:       'Log in or sign up to defend your zameen before the 48hr siege expires.',
-    zoneUnit:       'zones',
-    defaultRunner:  'Runner',
-    teamLeader:     'Sardar',
-    noFriends:      'No friends yet. Share your profile to connect!',
-    noTeam:         'You are not in a ' + 'Fauj' + ' yet.',
-    noDuels:        'No active duels. Challenge a teammate from the team tab!',
-    teamNamePlaceholder: 'Team name...',
-    invitePlaceholder:   'User ID to invite...',
-    cityOwner:      'Zamindar',
-    siegeLabel:      'Under Siege!',
-};
-// Fix self-referencing labels after object creation
-LABELS.noTeam = 'You are not in a ' + LABELS.tabTeam + ' yet.';
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    var API_BASE = window.location.origin;
+    var INDIA_CENTER = [22.5, 78.9];
+    var INDIA_ZOOM = 5;
 
-function applyLabels() {
-    var map = {
+    var LABELS = {
+      appName: 'Zamindar',
+      appTagline: "India's Running Territory Game",
+      pageTitle: 'Zamindar — Territory Map',
+      leaderboard: 'Top Zamindars',
+      community: 'Biradari',
+      tabFriends: 'Dost',
+      tabTeam: 'Fauj',
+      tabDuel: 'Dwandva',
+      indiaView: 'India View',
+      indiaBtn: 'India',
+      myLand: 'My Zameen',
+      fomoTitle: '3 runners claimed territory near you today',
+      fomoText: 'Log in or sign up to defend your zameen before the 48hr siege expires.',
+      zoneUnit: 'zones',
+      defaultRunner: 'Runner',
+      teamLeader: 'Sardar',
+      noFriends: 'No friends yet. Share your profile to connect!',
+      teamNamePlaceholder: 'Team name...',
+      invitePlaceholder: 'User ID to invite...',
+      cityOwner: 'Zamindar',
+      siegeLabel: 'Under Siege!',
+    };
+    LABELS.noTeam = 'You are not in a ' + LABELS.tabTeam + ' yet.';
+    LABELS.noDuels = 'No active duels. Challenge a teammate from the team tab!';
+
+    function applyLabels() {
+      var m = {
         'page-title': LABELS.pageTitle,
-        'lbl-app-name': LABELS.appName,
-        'lbl-app-tagline': LABELS.appTagline,
         'lbl-leaderboard-title': LABELS.leaderboard,
         'lbl-community-title': LABELS.community,
         'lbl-tab-friends': LABELS.tabFriends,
         'lbl-tab-team': LABELS.tabTeam,
         'lbl-tab-duel': LABELS.tabDuel,
         'lbl-india-view': LABELS.indiaView,
-        'lbl-my-land': LABELS.myLand,
+        'lbl-my-land': '📍 ' + LABELS.myLand,
         'lbl-india-btn': LABELS.indiaBtn,
         'lbl-my-land-btn': LABELS.myLand,
         'lbl-fomo-title': LABELS.fomoTitle,
         'lbl-fomo-text': LABELS.fomoText,
-    };
-    for (var id in map) {
+      };
+      for (var id in m) {
         var el = document.getElementById(id);
-        if (el) { if (id === 'page-title') { document.title = map[id]; } else { el.textContent = map[id]; } }
+        if (el) { if (id === 'page-title') document.title = m[id]; else el.textContent = m[id]; }
+      }
     }
-}
-applyLabels();
+    applyLabels();
 
-var params = new URLSearchParams(window.location.search);
-var currentUser = null;
-var authToken = null;
-var userIsLoggedIn = false;
+    var params = new URLSearchParams(window.location.search);
+    var currentUser = null;
+    var authToken = null;
+    var userIsLoggedIn = false;
 
-if (params.get('token')) {
-    authToken = params.get('token');
-    localStorage.setItem('zamindar_token', authToken);
-    currentUser = { id: params.get('user'), name: params.get('name') || 'Runner' };
-    localStorage.setItem('zamindar_user', JSON.stringify(currentUser));
-    window.history.replaceState({}, '', '/zamindar.html');
-} else if (params.get('user')) {
-    currentUser = { id: params.get('user'), name: params.get('name') || 'Runner' };
-    localStorage.setItem('zamindar_user', JSON.stringify(currentUser));
-    window.history.replaceState({}, '', '/zamindar.html');
-} else {
-    authToken = localStorage.getItem('zamindar_token');
-    var stored = localStorage.getItem('zamindar_user');
-    if (stored) { try { currentUser = JSON.parse(stored); } catch(e) { localStorage.removeItem('zamindar_user'); } }
-}
+    if (params.get('token')) {
+      authToken = params.get('token');
+      localStorage.setItem('zamindar_token', authToken);
+      currentUser = { id: params.get('user'), name: params.get('name') || 'Runner' };
+      localStorage.setItem('zamindar_user', JSON.stringify(currentUser));
+      window.history.replaceState({}, '', '/zamindar.html');
+    } else if (params.get('user')) {
+      currentUser = { id: params.get('user'), name: params.get('name') || 'Runner' };
+      localStorage.setItem('zamindar_user', JSON.stringify(currentUser));
+      window.history.replaceState({}, '', '/zamindar.html');
+    } else {
+      authToken = localStorage.getItem('zamindar_token');
+      var stored = localStorage.getItem('zamindar_user');
+      if (stored) { try { currentUser = JSON.parse(stored); } catch(e) { localStorage.removeItem('zamindar_user'); } }
+    }
 
-if (authToken) {
-    userIsLoggedIn = true;
-    showLoggedIn(currentUser);
-    fetch(API_BASE + '/auth/me', { headers: { 'Authorization': 'Bearer ' + authToken } })
-    .then(function(r) { if (!r.ok) throw new Error('expired'); return r.json(); })
-    .then(function(data) {
-        currentUser = { id: data.user.id, name: data.user.displayName, displayName: data.user.displayName, avatarUrl: data.user.avatarUrl, zonesOwned: data.user.zonesOwned, totalDistanceKm: data.user.totalDistanceKm, stravaConnected: data.user.stravaConnected };
-        localStorage.setItem('zamindar_user', JSON.stringify(currentUser));
-        showLoggedIn(currentUser);
-        // Center map on latest run (best), or home city (fallback)
-        if (data.user.lastRunCenter) {
-            map.setView([data.user.lastRunCenter.lat, data.user.lastRunCenter.lng], 14);
-        } else if (data.user.homeCity && data.user.homeCity.lat) {
-            map.setView([data.user.homeCity.lat, data.user.homeCity.lng], 12);
-        }
-    })
-    .catch(function() {
-        if (currentUser && currentUser.id) {
+    if (authToken) {
+      userIsLoggedIn = true;
+      showLoggedIn(currentUser);
+      fetch(API_BASE + '/auth/me', { headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(function(r) { if (!r.ok) throw new Error('expired'); return r.json(); })
+        .then(function(data) {
+          currentUser = { id: data.user.id, name: data.user.displayName, displayName: data.user.displayName, avatarUrl: data.user.avatarUrl, zonesOwned: data.user.zonesOwned, totalDistanceKm: data.user.totalDistanceKm, stravaConnected: data.user.stravaConnected };
+          localStorage.setItem('zamindar_user', JSON.stringify(currentUser));
+          showLoggedIn(currentUser);
+          if (data.user.lastRunCenter) { map.setView([data.user.lastRunCenter.lat, data.user.lastRunCenter.lng], 14); }
+          else if (data.user.homeCity && data.user.homeCity.lat) { map.setView([data.user.homeCity.lat, data.user.homeCity.lng], 12); }
+        })
+        .catch(function() {
+          if (currentUser && currentUser.id) {
             fetch(API_BASE + '/auth/status?user=' + currentUser.id).then(function(r){return r.json();}).then(function(data) {
-                if (data.authenticated) { currentUser = Object.assign({}, currentUser, data.user); localStorage.setItem('zamindar_user', JSON.stringify(currentUser)); showLoggedIn(currentUser); }
-                else { clearAuth(); }
+              if (data.authenticated) { currentUser = Object.assign({}, currentUser, data.user); localStorage.setItem('zamindar_user', JSON.stringify(currentUser)); showLoggedIn(currentUser); }
+              else { clearAuth(); }
             }).catch(function() { clearAuth(); });
-        } else { clearAuth(); }
-    });
-} else if (currentUser && currentUser.id) {
-    userIsLoggedIn = true;
-    showLoggedIn(currentUser);
-    fetch(API_BASE + '/auth/status?user=' + currentUser.id).then(function(r){return r.json();}).then(function(data) {
+          } else { clearAuth(); }
+        });
+    } else if (currentUser && currentUser.id) {
+      userIsLoggedIn = true;
+      showLoggedIn(currentUser);
+      fetch(API_BASE + '/auth/status?user=' + currentUser.id).then(function(r){return r.json();}).then(function(data) {
         if (data.authenticated) { currentUser = Object.assign({}, currentUser, data.user); localStorage.setItem('zamindar_user', JSON.stringify(currentUser)); showLoggedIn(currentUser); }
         else { clearAuth(); }
-    }).catch(function() {});
-}
-
-function showLoggedIn(user) {
-    userIsLoggedIn = true;
-    document.getElementById('auth-loggedout').style.display = 'none';
-    document.getElementById('auth-loggedin').style.display = 'block';
-    document.getElementById('user-name').textContent = user.displayName || user.name || LABELS.defaultRunner;
-    document.getElementById('user-avatar').src = user.avatarUrl || 'https://via.placeholder.com/40/ff6b00/1a0f0a?text=Z';
-    document.getElementById('user-stats').textContent = (user.zonesOwned || 0) + ' ' + LABELS.zoneUnit + ' | ' + (parseFloat(user.totalDistanceKm) || 0).toFixed(1) + ' km';
-    document.getElementById('fomo-banner').style.display = 'none';
-    if (user.stravaConnected) {
-        document.getElementById('btn-connect-strava').style.display = 'none';
-        document.getElementById('btn-disconnect-strava').style.display = 'block';
-    } else {
-        document.getElementById('btn-connect-strava').style.display = 'block';
-        document.getElementById('btn-disconnect-strava').style.display = 'none';
+      }).catch(function() {});
     }
-    if (typeof loadCommunity === 'function') { loadCommunity(); }
-}
 
-function clearAuth() {
-    localStorage.removeItem('zamindar_token');
-    localStorage.removeItem('zamindar_user');
-    authToken = null;
-    currentUser = null;
-    userIsLoggedIn = false;
-    document.getElementById('auth-loggedout').style.display = 'block';
-    document.getElementById('auth-loggedin').style.display = 'none';
-}
-
-function logout() {
-    if (authToken) {
-        fetch(API_BASE + '/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } }).catch(function(){});
+    function showLoggedIn(user) {
+      userIsLoggedIn = true;
+      document.getElementById('auth-loggedout').style.display = 'none';
+      document.getElementById('auth-loggedin').style.display = 'block';
+      var name = user.displayName || user.name || LABELS.defaultRunner;
+      document.getElementById('user-name').textContent = name;
+      document.getElementById('user-avatar').src = user.avatarUrl || 'https://via.placeholder.com/40/00e5a0/0b0f1a?text=' + name.charAt(0).toUpperCase();
+      document.getElementById('user-stats').textContent = (parseFloat(user.totalDistanceKm) || 0).toFixed(1) + ' km total';
+      document.getElementById('stat-pill-zones').textContent = (user.zonesOwned || 0) + ' ' + LABELS.zoneUnit;
+      document.getElementById('fomo-banner').style.display = 'none';
+      // Nav chip
+      var navRight = document.getElementById('nav-right');
+      navRight.innerHTML = '<div class="nav-user-chip"><img class="nav-avatar" src="' + (user.avatarUrl || 'https://via.placeholder.com/24/00e5a0/0b0f1a?text=' + name.charAt(0).toUpperCase()) + '" alt=""><span>' + name + '</span></div>';
+      if (user.stravaConnected) { document.getElementById('btn-connect-strava') && (document.getElementById('btn-connect-strava').style.display = 'none'); document.getElementById('btn-disconnect-strava') && (document.getElementById('btn-disconnect-strava').style.display = 'block'); }
+      else { document.getElementById('btn-connect-strava') && (document.getElementById('btn-connect-strava').style.display = 'flex'); document.getElementById('btn-disconnect-strava') && (document.getElementById('btn-disconnect-strava').style.display = 'none'); }
+      if (typeof loadCommunity === 'function') loadCommunity();
     }
-    clearAuth();
-    window.location.reload();
-}
 
-function linkStrava() {
-    var linkUrl = '/auth/strava';
-    if (authToken) { linkUrl += '?link_token=' + encodeURIComponent(authToken); }
-    window.location.href = linkUrl;
-}
+    function clearAuth() {
+      localStorage.removeItem('zamindar_token'); localStorage.removeItem('zamindar_user');
+      authToken = null; currentUser = null; userIsLoggedIn = false;
+      document.getElementById('auth-loggedout').style.display = 'block';
+      document.getElementById('auth-loggedin').style.display = 'none';
+      var navRight = document.getElementById('nav-right');
+      navRight.innerHTML = '<a href="/" class="nav-link">Home</a><a href="/" class="nav-cta">Log In</a>';
+    }
 
-function disconnectStrava() {
-    if (!authToken) { return; }
-    fetch(API_BASE + '/auth/strava', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) {
-            document.getElementById('btn-connect-strava').style.display = 'block';
+    function logout() {
+      if (authToken) { fetch(API_BASE + '/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } }).catch(function(){}); }
+      clearAuth(); window.location.reload();
+    }
+
+    function linkStrava() {
+      var linkUrl = '/auth/strava';
+      if (authToken) linkUrl += '?link_token=' + encodeURIComponent(authToken);
+      window.location.href = linkUrl;
+    }
+
+    function disconnectStrava() {
+      if (!authToken) return;
+      fetch(API_BASE + '/auth/strava', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            document.getElementById('btn-connect-strava').style.display = 'flex';
             document.getElementById('btn-disconnect-strava').style.display = 'none';
             if (currentUser) { currentUser.stravaConnected = false; localStorage.setItem('zamindar_user', JSON.stringify(currentUser)); }
-        }
-    })
-    .catch(function() {});
-}
+          }
+        }).catch(function() {});
+    }
 
-function showDeleteConfirm() { document.getElementById('delete-confirm').classList.add('active'); }
-function hideDeleteConfirm() { document.getElementById('delete-confirm').classList.remove('active'); }
+    function showDeleteConfirm() { document.getElementById('delete-confirm').classList.add('active'); }
+    function hideDeleteConfirm() { document.getElementById('delete-confirm').classList.remove('active'); }
 
-function deleteAccount() {
-    if (!authToken) { hideDeleteConfirm(); return; }
-    var btn = document.getElementById('delete-btn');
-    btn.textContent = 'Deleting...';
-    btn.disabled = true;
-    fetch(API_BASE + '/auth/account', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) { hideDeleteConfirm(); clearAuth(); }
-        btn.textContent = 'Delete'; btn.disabled = false;
-    })
-    .catch(function() { btn.textContent = 'Delete'; btn.disabled = false; hideDeleteConfirm(); });
-}
+    function deleteAccount() {
+      if (!authToken) { hideDeleteConfirm(); return; }
+      var btn = document.getElementById('delete-btn');
+      btn.textContent = 'Deleting...'; btn.disabled = true;
+      fetch(API_BASE + '/auth/account', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) { if (data.success) { hideDeleteConfirm(); clearAuth(); } btn.textContent = 'Delete'; btn.disabled = false; })
+        .catch(function() { btn.textContent = 'Delete'; btn.disabled = false; hideDeleteConfirm(); });
+    }
 
+    // ── MAP INIT ──
+    var map = L.map('map', { zoomControl: true }).setView(INDIA_CENTER, INDIA_ZOOM);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19
+    }).addTo(map);
 
-var map = L.map('map', { zoomControl: true }).setView(INDIA_CENTER, INDIA_ZOOM);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '\u00a9 OpenStreetMap \u00a9 CARTO', maxZoom: 19 }).addTo(map);
-var territoryLayer = L.layerGroup().addTo(map);
-var cityLayer = L.layerGroup().addTo(map);
-var COLORS = ['#e07850','#00b4d8','#e63946','#2a9d8f','#e9c46a','#f4a261','#264653','#9b5de5'];
-function getRunnerColor(id) { return COLORS[Math.abs(hashCode(id)) % COLORS.length]; }
-function hashCode(str) { var hash = 0; for (var i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; } return hash; }
+    var territoryLayer = L.layerGroup().addTo(map);
+    var cityLayer = L.layerGroup().addTo(map);
+    var myZonesLayer = L.layerGroup().addTo(map);
 
-function loadTerritories(bounds) {
-    var b = bounds || map.getBounds();
-    var url = API_BASE + '/api/map/territories?bbox=' + b.getWest() + ',' + b.getSouth() + ',' + b.getEast() + ',' + b.getNorth();
-    fetch(url, { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
-        if (!data) return;
-        territoryLayer.clearLayers();
-        if (data.territories) {
+    var COLORS = ['#00e5a0','#00c8ff','#ff4d6d','#a064ff','#ffc800','#f4a261','#2a9d8f','#9b5de5'];
+    function getRunnerColor(id) { return COLORS[Math.abs(hashCode(id)) % COLORS.length]; }
+    function hashCode(str) { var h = 0; for (var i = 0; i < str.length; i++) { h = ((h<<5)-h)+str.charCodeAt(i); h|=0; } return h; }
+
+    function authHeaders() { return { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' }; }
+
+    function loadTerritories(bounds) {
+      var b = bounds || map.getBounds();
+      var url = API_BASE + '/api/map/territories?bbox=' + b.getWest() + ',' + b.getSouth() + ',' + b.getEast() + ',' + b.getNorth();
+      fetch(url, { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); })
+        .then(function(data) {
+          if (!data) return;
+          territoryLayer.clearLayers();
+          if (data.territories) {
             var userId = currentUser && currentUser.id;
             data.territories.forEach(function(t) {
-                if (t.geojson) {
-                    var isOwn = userId && t.runner_id === userId;
-                    var color = isOwn ? '#e07850' : getRunnerColor(t.runner_id || 'default');
-                    var layer = L.geoJSON(t.geojson, { style: { color: isOwn ? '#ff6b35' : color, fillColor: color, fillOpacity: isOwn ? 0.35 : 0.3, weight: isOwn ? 3 : 2 } });
-                    layer.bindPopup('<div class="popup-content"><h4>' + (t.runner_name || 'Unknown') + (isOwn ? ' (You)' : '') + '</h4><p>Distance: ' + (t.distance_m / 1000).toFixed(1) + ' km</p><p>Claimed: ' + new Date(t.created_at).toLocaleDateString() + '</p>' + (t.contested ? '<p class="siege">' + LABELS.siegeLabel + '</p>' : '') + '</div>');
-                    layer.addTo(territoryLayer);
-                }
+              if (t.geojson) {
+                var isOwn = userId && t.runner_id === userId;
+                var color = isOwn ? '#00e5a0' : getRunnerColor(t.runner_id || 'default');
+                var layer = L.geoJSON(t.geojson, { style: { color: isOwn ? '#00e5a0' : color, fillColor: color, fillOpacity: isOwn ? 0.35 : 0.25, weight: isOwn ? 2.5 : 1.5 } });
+                layer.bindPopup('<div class="popup-content"><h4>' + (t.runner_name || 'Unknown') + (isOwn ? ' (You)' : '') + '</h4><p>Distance: ' + (t.distance_m / 1000).toFixed(1) + ' km</p><p>Claimed: ' + new Date(t.created_at).toLocaleDateString() + '</p>' + (t.contested ? '<p class="siege">' + LABELS.siegeLabel + '</p>' : '') + '</div>');
+                layer.addTo(territoryLayer);
+              }
             });
-        }
-    }).catch(function(e) { console.log('Territory load:', e.message); });
-}
+          }
+        }).catch(function(e) { console.log('Territory load:', e.message); });
+    }
 
-function loadCities() {
-    fetch(API_BASE + '/api/map/cities', { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
-        if (!data) return;
-        cityLayer.clearLayers();
-        if (data.cities) {
+    function loadCities() {
+      fetch(API_BASE + '/api/map/cities', { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); })
+        .then(function(data) {
+          if (!data) return;
+          cityLayer.clearLayers();
+          if (data.cities) {
             data.cities.forEach(function(c) {
-                var icon = L.divIcon({ className: 'city-marker', html: c.name.charAt(0) });
-                L.marker([c.lat, c.lng], { icon: icon })
-                    .bindPopup('<div class="popup-content"><h4>' + c.name + '</h4><p>Capture radius: ' + c.capture_radius_m + 'm</p><p>Multiplier: ' + c.multiplier + 'x</p>' + (c.zamindar ? '<p>' + LABELS.cityOwner + ': ' + c.zamindar + '</p>' : '<p>Unclaimed!</p>') + '</div>')
-                    .addTo(cityLayer);
+              var icon = L.divIcon({ className: 'city-marker', html: c.name.charAt(0) });
+              L.marker([c.lat, c.lng], { icon: icon })
+                .bindPopup('<div class="popup-content"><h4>' + c.name + '</h4><p>Capture radius: ' + c.capture_radius_m + 'm</p><p>Multiplier: ' + c.multiplier + 'x</p>' + (c.zamindar ? '<p>' + LABELS.cityOwner + ': ' + c.zamindar + '</p>' : '<p>Unclaimed!</p>') + '</div>')
+                .addTo(cityLayer);
             });
-        }
-    }).catch(function(e) { console.log('Cities load:', e.message); });
-}
+          }
+        }).catch(function(e) { console.log('Cities load:', e.message); });
+    }
 
-function loadLeaderboard() {
-    fetch(API_BASE + '/api/map/leaderboard', { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); }).then(function(data) {
-        if (!data) return;
-        var el = document.getElementById('leaderboard');
-        if (data.leaderboard && data.leaderboard.length > 0) {
+    function loadLeaderboard() {
+      fetch(API_BASE + '/api/map/leaderboard', { headers: authHeaders() }).then(function(r) { if (!r.ok) return; return r.json(); })
+        .then(function(data) {
+          if (!data) return;
+          var el = document.getElementById('leaderboard');
+          var AVATAR_COLORS = ['#00e5a0','#00c8ff','#a064ff','#ffc800','#ff4d6d'];
+          if (data.leaderboard && data.leaderboard.length > 0) {
             el.innerHTML = data.leaderboard.map(function(r, i) {
-                return '<div class="leaderboard-item"><span class="runner-name">' + (i+1) + '. ' + (r.display_name || r.name) + '</span><span class="runner-score">' + (r.zones_owned || r.zone_count || 0) + ' ' + LABELS.zoneUnit + '</span></div>';
+              var col = AVATAR_COLORS[i % AVATAR_COLORS.length];
+              var initial = (r.display_name || r.name || 'R').charAt(0).toUpperCase();
+              return '<div class="lb-item">' +
+                '<span class="lb-rank' + (i === 0 ? ' gold' : '') + '">' + String(i+1).padStart(2,'0') + '</span>' +
+                '<div class="lb-avatar" style="background:' + col + '">' + initial + '</div>' +
+                '<span class="lb-name">' + (r.display_name || r.name) + '</span>' +
+                '<span class="lb-score">' + (r.zones_owned || r.zone_count || 0) + ' zones</span>' +
+                '</div>';
             }).join('');
-        } else {
-            el.innerHTML = '<div class="leaderboard-item"><span class="runner-name">No runners yet. Be the first!</span></div>';
-        }
-    }).catch(function() {
-        document.getElementById('leaderboard').innerHTML = '<div class="leaderboard-item"><span class="runner-name">Log in to start!</span></div>';
-    });
-}
-
-var myZonesLayer = L.layerGroup().addTo(map);
-
-function setView(view) {
-    document.querySelectorAll('.map-btn').forEach(function(b) { b.classList.remove('active'); });
-    if (view === 'india') {
-        map.setView(INDIA_CENTER, INDIA_ZOOM);
-        myZonesLayer.clearLayers();
+          } else { el.innerHTML = '<div class="lb-item"><span class="lb-name" style="color:var(--muted)">No runners yet. Be first!</span></div>'; }
+        }).catch(function() { document.getElementById('leaderboard').innerHTML = '<div class="lb-item"><span class="lb-name" style="color:var(--muted)">Log in to start!</span></div>'; });
     }
-    else if (view === 'my') {
+
+    function setView(view) {
+      document.querySelectorAll('.map-ctrl-btn, .mf-btn').forEach(function(b) { b.classList.remove('active'); });
+      if (view === 'india') {
+        map.setView(INDIA_CENTER, INDIA_ZOOM); myZonesLayer.clearLayers();
+        document.getElementById('lbl-india-view') && document.getElementById('lbl-india-view').classList.add('active');
+        document.getElementById('lbl-india-btn') && document.getElementById('lbl-india-btn').classList.add('active');
+      } else if (view === 'my') {
         showMyZones();
+        document.getElementById('lbl-my-land') && document.getElementById('lbl-my-land').classList.add('active');
+        document.getElementById('lbl-my-land-btn') && document.getElementById('lbl-my-land-btn').classList.add('active');
+      }
     }
-}
 
-function showMyZones() {
-    if (!currentUser || !currentUser.id) { document.getElementById('auth-loggedout').scrollIntoView({behavior:'smooth'}); return; }
-    fetch(API_BASE + '/api/zones/user/' + currentUser.id, { headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        var zones = data.zones || [];
-        myZonesLayer.clearLayers();
-        if (zones.length === 0) return;
-        var group = L.featureGroup();
-        zones.forEach(function(z) {
-            if (!z.geom) { console.log('Zone missing geom:', z.id); return; }
+    function showMyZones() {
+      if (!currentUser || !currentUser.id) { document.getElementById('auth-loggedout').scrollIntoView({behavior:'smooth'}); return; }
+      fetch(API_BASE + '/api/zones/user/' + currentUser.id, { headers: authHeaders() })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var zones = data.zones || [];
+          myZonesLayer.clearLayers();
+          if (zones.length === 0) return;
+          var group = L.featureGroup();
+          zones.forEach(function(z) {
+            if (!z.geom) return;
             var geom;
-            try {
-                geom = typeof z.geom === 'string' ? JSON.parse(z.geom) : z.geom;
-            } catch (e) {
-                console.log('Zone geom not valid GeoJSON (likely WKB hex):', z.id, typeof z.geom, String(z.geom).substring(0, 40));
-                return;
-            }
-            if (!geom || !geom.type) { console.log('Zone geom has no type:', z.id, geom); return; }
+            try { geom = typeof z.geom === 'string' ? JSON.parse(z.geom) : z.geom; } catch(e) { return; }
+            if (!geom || !geom.type) return;
+            var layer = L.geoJSON(geom, { style: { color: '#00e5a0', fillColor: '#00e5a0', fillOpacity: 0.4, weight: 2.5 } });
             var distKm = z.runs && z.runs.distance_km ? parseFloat(z.runs.distance_km).toFixed(1) : '?';
-            var dateStr = z.created_at ? new Date(z.created_at).toLocaleDateString() : '';
-            var areaKm2 = ((z.area_m2 || 0) / 1000000).toFixed(3);
-            // Bright highlight layer for own zones
-            var layer = L.geoJSON(geom, {
-                style: { color: '#ff6b35', fillColor: '#e07850', fillOpacity: 0.4, weight: 3 }
-            });
-            layer.bindPopup(
-                '<div class="popup-content">' +
-                '<h4>Your Territory</h4>' +
-                '<p>' + distKm + ' km run</p>' +
-                '<p>' + dateStr + '</p>' +
-                '<span style="color:#e07850; font-weight:bold;">' + areaKm2 + ' km\u00B2</span>' +
-                '</div>'
-            );
+            layer.bindPopup('<div class="popup-content"><h4>Your Territory</h4><p>' + distKm + ' km run</p><p>' + (z.created_at ? new Date(z.created_at).toLocaleDateString() : '') + '</p></div>');
             layer.addTo(myZonesLayer);
             group.addLayer(layer);
-        });
-        if (group.getLayers().length > 0) {
-            map.fitBounds(group.getBounds(), { padding: [60, 60], maxZoom: 16 });
-        }
-    }).catch(function(e) { console.log('My zones error:', e.message); });
-}
-
-function simulateRun() {
-    var center = map.getCenter();
-    var points = [];
-    for (var i = 0; i < 20; i++) {
-        var angle = (i / 20) * Math.PI * 2;
-        var r = 0.005 + Math.random() * 0.003;
-        points.push([center.lat + Math.sin(angle) * r, center.lng + Math.cos(angle) * r * 1.3]);
+          });
+          if (group.getLayers().length > 0) map.fitBounds(group.getBounds(), { padding: [60,60], maxZoom: 16 });
+        }).catch(function(e) { console.log('My zones error:', e.message); });
     }
-    points.push(points[0]);
-    var polygon = L.polygon(points, { color: '#e07850', fillColor: '#e07850', fillOpacity: 0.3, weight: 2 }).addTo(territoryLayer);
-    polygon.bindPopup('<div class="popup-content"><h4>Simulated Run</h4><p>This is what your territory would look like!</p></div>').openPopup();
-}
 
-function closeFomo() { document.getElementById('fomo-banner').style.display = 'none'; }
+    function simulateRun() {
+      var center = map.getCenter();
+      var points = [];
+      for (var i = 0; i < 20; i++) { var a = (i/20)*Math.PI*2; var r = 0.005+Math.random()*0.003; points.push([center.lat+Math.sin(a)*r, center.lng+Math.cos(a)*r*1.3]); }
+      points.push(points[0]);
+      L.polygon(points, { color: '#00e5a0', fillColor: '#00e5a0', fillOpacity: 0.25, weight: 2 }).addTo(territoryLayer).bindPopup('<div class="popup-content"><h4>Simulated Run</h4><p>This is what your territory would look like!</p></div>').openPopup();
+    }
 
-// ─── Biradari (Community) ───────────────────────────────────────────────────
+    function closeFomo() { document.getElementById('fomo-banner').style.display = 'none'; }
 
-function authHeaders() { return { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' }; }
+    // ── COMMUNITY ──
+    function switchTab(tab) {
+      document.querySelectorAll('.comm-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelector('[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+    }
+    function toggleDostRequests() { var el = document.getElementById('dost-requests'); el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
 
-function switchTab(tab) {
-    document.querySelectorAll('.community-tab').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelector('[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
-    document.getElementById('tab-' + tab).classList.add('active');
-}
-
-function toggleDostRequests() {
-    var el = document.getElementById('dost-requests');
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
-
-// --- DOST ---
-function loadDostList() {
-    fetch(API_BASE + '/api/social/friends', { headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        var el = document.getElementById('dost-list');
-        var friends = data.friends || [];
-        if (friends.length === 0) { el.innerHTML = '<div class="social-empty">' + LABELS.noFriends + '</div>'; return; }
-        el.innerHTML = friends.map(function(f) {
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (f.display_name || LABELS.defaultRunner) + '</div><div class="social-card-sub">' + (f.zones_owned || 0) + ' ' + LABELS.zoneUnit + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-ghost" onclick="removeDost(\'' + f.friendship_id + '\')">Remove</button></div></div>';
-        }).join('');
-    }).catch(function() { document.getElementById('dost-list').innerHTML = '<div class="social-empty">Could not load friends.</div>'; });
-}
-
-function loadDostRequests() {
-    fetch(API_BASE + '/api/social/friends/requests', { headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        var reqs = data.requests || [];
-        var countEl = document.getElementById('dost-req-count');
-        countEl.textContent = reqs.length > 0 ? '(' + reqs.length + ')' : '';
+    function loadDostList() {
+      fetch(API_BASE + '/api/social/friends', { headers: authHeaders() }).then(function(r){return r.json();}).then(function(data) {
+        var el = document.getElementById('dost-list'); var friends = data.friends || [];
+        if (!friends.length) { el.innerHTML = '<div class="social-empty">' + LABELS.noFriends + '</div>'; return; }
+        el.innerHTML = friends.map(function(f) { return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (f.display_name||LABELS.defaultRunner) + '</div><div class="social-card-sub">' + (f.zones_owned||0) + ' zones</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-ghost" onclick="removeDost(\'' + f.friendship_id + '\')">Remove</button></div></div>'; }).join('');
+      }).catch(function() { document.getElementById('dost-list').innerHTML = '<div class="social-empty">Could not load friends.</div>'; });
+    }
+    function loadDostRequests() {
+      fetch(API_BASE + '/api/social/friends/requests', { headers: authHeaders() }).then(function(r){return r.json();}).then(function(data) {
+        var reqs = data.requests || []; document.getElementById('dost-req-count').textContent = reqs.length ? '(' + reqs.length + ')' : '';
         var el = document.getElementById('dost-requests');
-        if (reqs.length === 0) { el.innerHTML = '<div class="social-empty">No pending requests.</div>'; return; }
-        el.innerHTML = reqs.map(function(r) {
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (r.display_name || LABELS.defaultRunner) + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="acceptDost(\'' + r.friendship_id + '\')">Accept</button><button class="btn-sm btn-sm-ghost" onclick="declineDost(\'' + r.friendship_id + '\')">Decline</button></div></div>';
-        }).join('');
-    }).catch(function() {});
-}
+        el.innerHTML = !reqs.length ? '<div class="social-empty">No pending requests.</div>' : reqs.map(function(r) { return '<div class="social-card"><div class="social-card-info"><div class="social-card-name">' + (r.display_name||LABELS.defaultRunner) + '</div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="acceptDost(\'' + r.friendship_id + '\')">Accept</button><button class="btn-sm btn-sm-ghost" onclick="declineDost(\'' + r.friendship_id + '\')">Decline</button></div></div>'; }).join('');
+      }).catch(function(){});
+    }
+    function acceptDost(id) { fetch(API_BASE+'/api/social/friends/'+id+'/accept',{method:'POST',headers:authHeaders()}).then(function(){loadDostList();loadDostRequests();}).catch(function(){}); }
+    function declineDost(id) { fetch(API_BASE+'/api/social/friends/'+id+'/decline',{method:'POST',headers:authHeaders()}).then(function(){loadDostRequests();}).catch(function(){}); }
+    function removeDost(id) { fetch(API_BASE+'/api/social/friends/'+id,{method:'DELETE',headers:authHeaders()}).then(function(){loadDostList();}).catch(function(){}); }
 
-function acceptDost(id) {
-    fetch(API_BASE + '/api/social/friends/' + id + '/accept', { method: 'POST', headers: authHeaders() })
-    .then(function() { loadDostList(); loadDostRequests(); })
-    .catch(function() {});
-}
-
-function declineDost(id) {
-    fetch(API_BASE + '/api/social/friends/' + id + '/decline', { method: 'POST', headers: authHeaders() })
-    .then(function() { loadDostRequests(); })
-    .catch(function() {});
-}
-
-function removeDost(id) {
-    fetch(API_BASE + '/api/social/friends/' + id, { method: 'DELETE', headers: authHeaders() })
-    .then(function() { loadDostList(); })
-    .catch(function() {});
-}
-
-// --- FAUJ ---
-function loadFauj() {
-    fetch(API_BASE + '/api/social/fauj/mine', { headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    function loadFauj() {
+      fetch(API_BASE+'/api/social/fauj/mine',{headers:authHeaders()}).then(function(r){return r.json();}).then(function(data) {
         var el = document.getElementById('fauj-content');
         if (!data.fauj) {
-            el.innerHTML = '<div class="social-empty">' + LABELS.noTeam + '</div>' +
-                '<div class="input-row"><input id="fauj-name" class="input-sm" placeholder="' + LABELS.teamNamePlaceholder + '"></div>' +
-                '<button class="btn-sm btn-sm-primary" onclick="createFauj()" style="width:100%;">Create ' + LABELS.tabTeam + '</button>' +
-                '<div style="margin-top:0.75rem;"><button class="btn-sm btn-sm-ghost" onclick="loadFaujInvites()" style="width:100%;">Check Invites</button></div>' +
-                '<div id="fauj-invites" style="margin-top:0.5rem;"></div>';
-            return;
+          el.innerHTML = '<div class="social-empty">' + LABELS.noTeam + '</div><div class="input-row"><input id="fauj-name" class="input-sm" placeholder="' + LABELS.teamNamePlaceholder + '"></div><button class="btn-sm btn-sm-primary" onclick="createFauj()" style="width:100%;padding:0.4rem;">Create ' + LABELS.tabTeam + '</button><div style="margin-top:0.6rem;"><button class="btn-sm btn-sm-ghost" onclick="loadFaujInvites()" style="width:100%;padding:0.35rem;">Check Invites</button></div><div id="fauj-invites" style="margin-top:0.4rem;"></div>'; return;
         }
-        var fauj = data.fauj;
-        var members = fauj.members || [];
-        var isLeader = data.role === 'leader';
+        var fauj = data.fauj; var members = fauj.members||[]; var isLeader = data.role==='leader';
         var html = '<div class="fauj-header"><span class="fauj-title">' + fauj.name + '</span><span class="fauj-badge">' + members.length + '/8</span></div>';
-        html += members.map(function(m) {
-            var label = m.role === 'leader' ? ' (' + LABELS.teamLeader + ')' : '';
-            var duelBtn = (m.user_id !== currentUser.id) ? '<button class="btn-sm btn-sm-ghost" onclick="challengeDwandva(\'' + m.user_id + '\')">' + LABELS.tabDuel + '</button>' : '';
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (m.display_name || LABELS.defaultRunner) + label + '</div><div class="social-card-sub">' + (m.zones_owned || 0) + ' ' + LABELS.zoneUnit + '</div></div></div><div class="social-card-actions">' + duelBtn + '</div></div>';
-        }).join('');
+        html += members.map(function(m) { var lbl = m.role==='leader'?' ('+LABELS.teamLeader+')':''; var duelBtn = m.user_id!==currentUser.id?'<button class="btn-sm btn-sm-ghost" onclick="challengeDwandva(\'' + m.user_id + '\')">' + LABELS.tabDuel + '</button>':''; return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">'+(m.display_name||LABELS.defaultRunner)+lbl+'</div><div class="social-card-sub">'+(m.zones_owned||0)+' zones</div></div></div><div class="social-card-actions">'+duelBtn+'</div></div>'; }).join('');
         html += '<div style="margin-top:0.5rem;">';
-        if (isLeader) {
-            html += '<div class="input-row"><input id="fauj-invite-id" class="input-sm" placeholder="' + LABELS.invitePlaceholder + '"><button class="btn-sm btn-sm-primary" onclick="inviteToFauj(\'' + fauj.id + '\')">Invite</button></div>';
-        }
-        html += '<button class="btn-sm btn-sm-danger" onclick="leaveFauj()" style="width:100%;">' + (isLeader ? 'Disband ' + LABELS.tabTeam : 'Leave ' + LABELS.tabTeam) + '</button>';
-        html += '</div>';
+        if (isLeader) html += '<div class="input-row"><input id="fauj-invite-id" class="input-sm" placeholder="' + LABELS.invitePlaceholder + '"><button class="btn-sm btn-sm-primary" onclick="inviteToFauj(\'' + fauj.id + '\')">Invite</button></div>';
+        html += '<button class="btn-sm btn-sm-danger" onclick="leaveFauj()" style="width:100%;padding:0.35rem;">' + (isLeader?'Disband '+LABELS.tabTeam:'Leave '+LABELS.tabTeam) + '</button></div>';
         el.innerHTML = html;
-    }).catch(function() { document.getElementById('fauj-content').innerHTML = '<div class="social-empty">Could not load ' + LABELS.tabTeam + '.</div>'; });
-}
+      }).catch(function() { document.getElementById('fauj-content').innerHTML = '<div class="social-empty">Could not load '+LABELS.tabTeam+'.</div>'; });
+    }
+    function createFauj() { var name=document.getElementById('fauj-name').value.trim(); if(!name)return; fetch(API_BASE+'/api/social/fauj',{method:'POST',headers:authHeaders(),body:JSON.stringify({name:name})}).then(function(r){return r.json();}).then(function(d){if(d.success)loadFauj();}).catch(function(){}); }
+    function inviteToFauj(id) { var uid=document.getElementById('fauj-invite-id').value.trim(); if(!uid)return; fetch(API_BASE+'/api/social/fauj/'+id+'/invite',{method:'POST',headers:authHeaders(),body:JSON.stringify({userId:uid})}).then(function(r){return r.json();}).then(function(d){if(d.success)document.getElementById('fauj-invite-id').value='';}).catch(function(){}); }
+    function loadFaujInvites() {
+      fetch(API_BASE+'/api/social/fauj/invites',{headers:authHeaders()}).then(function(r){return r.json();}).then(function(data) {
+        var el=document.getElementById('fauj-invites'); var invites=data.invites||[];
+        el.innerHTML = !invites.length ? '<div class="social-empty">No pending invites.</div>' : invites.map(function(inv){return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">'+(inv.fauj_name||LABELS.tabTeam)+'</div><div class="social-card-sub">From '+(inv.invited_by_name||'someone')+'</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="respondInvite(\'' + inv.id + '\',true)">Join</button><button class="btn-sm btn-sm-ghost" onclick="respondInvite(\'' + inv.id + '\',false)">Decline</button></div></div>';}).join('');
+      }).catch(function(){});
+    }
+    function respondInvite(id,accept) { fetch(API_BASE+'/api/social/fauj/invites/'+id+'/respond',{method:'POST',headers:authHeaders(),body:JSON.stringify({accept:accept})}).then(function(r){return r.json();}).then(function(d){if(d.success)loadFauj();}).catch(function(){}); }
+    function leaveFauj() { fetch(API_BASE+'/api/social/fauj/leave',{method:'POST',headers:authHeaders()}).then(function(r){return r.json();}).then(function(d){if(d.success)loadFauj();}).catch(function(){}); }
 
-function createFauj() {
-    var name = document.getElementById('fauj-name').value.trim();
-    if (!name) { return; }
-    fetch(API_BASE + '/api/social/fauj', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ name: name }) })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) { loadFauj(); }
-    }).catch(function() {});
-}
-
-function inviteToFauj(faujId) {
-    var userId = document.getElementById('fauj-invite-id').value.trim();
-    if (!userId) { return; }
-    fetch(API_BASE + '/api/social/fauj/' + faujId + '/invite', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ userId: userId }) })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) { document.getElementById('fauj-invite-id').value = ''; }
-    }).catch(function() {});
-}
-
-function loadFaujInvites() {
-    fetch(API_BASE + '/api/social/fauj/invites', { headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        var el = document.getElementById('fauj-invites');
-        var invites = data.invites || [];
-        if (invites.length === 0) { el.innerHTML = '<div class="social-empty">No pending invites.</div>'; return; }
-        el.innerHTML = invites.map(function(inv) {
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">' + (inv.fauj_name || LABELS.tabTeam) + '</div><div class="social-card-sub">From ' + (inv.invited_by_name || 'someone') + '</div></div></div><div class="social-card-actions"><button class="btn-sm btn-sm-primary" onclick="respondInvite(\'' + inv.id + '\', true)">Join</button><button class="btn-sm btn-sm-ghost" onclick="respondInvite(\'' + inv.id + '\', false)">Decline</button></div></div>';
+    function loadDwandva() {
+      fetch(API_BASE+'/api/social/duels',{headers:authHeaders()}).then(function(r){return r.json();}).then(function(data) {
+        var el=document.getElementById('dwandva-content'); var duels=data.duels||[];
+        if(!duels.length){el.innerHTML='<div class="social-empty">'+LABELS.noDuels+'</div>';return;}
+        el.innerHTML=duels.map(function(d){
+          var isCh=d.challenger_id===currentUser.id; var otherName=isCh?(d.opponent&&d.opponent.display_name||'Opponent'):(d.challenger&&d.challenger.display_name||'Challenger');
+          var stCls=d.status==='accepted'?'duel-accepted':'duel-pending'; var stLbl=d.status==='accepted'?'Active':'Pending';
+          var tl=''; if(d.status==='accepted'&&d.expires_at){var hrs=Math.max(0,Math.round((new Date(d.expires_at)-Date.now())/3600000));tl=' ('+hrs+'h left)';}
+          var actions=''; if(d.status==='pending'&&!isCh)actions='<button class="btn-sm btn-sm-primary" onclick="acceptDwandva(\'' + d.id + '\')">Accept</button>';
+          actions+='<button class="btn-sm btn-sm-danger" onclick="cancelDwandva(\'' + d.id + '\')">Cancel</button>';
+          return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">vs '+otherName+'</div><div class="social-card-sub"><span class="duel-status '+stCls+'">'+stLbl+'</span>'+tl+'</div></div></div><div class="social-card-actions">'+actions+'</div></div>';
         }).join('');
-    }).catch(function() {});
-}
+      }).catch(function(){document.getElementById('dwandva-content').innerHTML='<div class="social-empty">Could not load duels.</div>';});
+    }
+    function challengeDwandva(oid){fetch(API_BASE+'/api/social/duels/challenge',{method:'POST',headers:authHeaders(),body:JSON.stringify({opponentId:oid})}).then(function(r){return r.json();}).then(function(d){if(d.success){switchTab('dwandva');loadDwandva();}}).catch(function(){});}
+    function acceptDwandva(id){fetch(API_BASE+'/api/social/duels/'+id+'/accept',{method:'POST',headers:authHeaders()}).then(function(r){return r.json();}).then(function(d){if(d.success)loadDwandva();}).catch(function(){});}
+    function cancelDwandva(id){fetch(API_BASE+'/api/social/duels/'+id+'/cancel',{method:'POST',headers:authHeaders()}).then(function(r){return r.json();}).then(function(d){if(d.success)loadDwandva();}).catch(function(){});}
 
-function respondInvite(id, accept) {
-    fetch(API_BASE + '/api/social/fauj/invites/' + id + '/respond', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ accept: accept }) })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) { loadFauj(); }
-    }).catch(function() {});
-}
+    function loadCommunity() {
+      if (!authToken) return;
+      document.getElementById('community-section').style.display = 'block';
+      loadDostList(); loadDostRequests(); loadFauj(); loadDwandva();
+    }
 
-function leaveFauj() {
-    fetch(API_BASE + '/api/social/fauj/leave', { method: 'POST', headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) { loadFauj(); }
-    }).catch(function() {});
-}
+    if (!userIsLoggedIn) { setTimeout(function() { if (!userIsLoggedIn) document.getElementById('fomo-banner').style.display = 'block'; }, 5000); }
+    if (window.innerWidth <= 768) { window.location.href = '/zamindar-mobile.html'; }
 
-// --- DWANDVA (Duels) ---
-function loadDwandva() {
-    fetch(API_BASE + '/api/social/duels', { headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        var el = document.getElementById('dwandva-content');
-        var duels = data.duels || [];
-        if (duels.length === 0) { el.innerHTML = '<div class="social-empty">' + LABELS.noDuels + '</div>'; return; }
-        el.innerHTML = duels.map(function(d) {
-            var isChallenger = d.challenger_id === currentUser.id;
-            var otherName = isChallenger ? (d.opponent && d.opponent.display_name || 'Opponent') : (d.challenger && d.challenger.display_name || 'Challenger');
-            var statusClass = d.status === 'accepted' ? 'duel-accepted' : 'duel-pending';
-            var statusLabel = d.status === 'accepted' ? 'Active' : 'Pending';
-            var timeLeft = '';
-            if (d.status === 'accepted' && d.expires_at) {
-                var hrs = Math.max(0, Math.round((new Date(d.expires_at) - Date.now()) / 3600000));
-                timeLeft = ' (' + hrs + 'h left)';
-            }
-            var actions = '';
-            if (d.status === 'pending' && !isChallenger) {
-                actions = '<button class="btn-sm btn-sm-primary" onclick="acceptDwandva(\'' + d.id + '\')">Accept</button>';
-            }
-            actions += '<button class="btn-sm btn-sm-danger" onclick="cancelDwandva(\'' + d.id + '\')">Cancel</button>';
-            return '<div class="social-card"><div class="social-card-info"><div><div class="social-card-name">vs ' + otherName + '</div><div class="social-card-sub"><span class="duel-status ' + statusClass + '">' + statusLabel + '</span>' + timeLeft + '</div></div></div><div class="social-card-actions">' + actions + '</div></div>';
-        }).join('');
-    }).catch(function() { document.getElementById('dwandva-content').innerHTML = '<div class="social-empty">Could not load duels.</div>'; });
-}
-
-function challengeDwandva(opponentId) {
-    fetch(API_BASE + '/api/social/duels/challenge', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ opponentId: opponentId }) })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) { switchTab('dwandva'); loadDwandva(); }
-    }).catch(function() {});
-}
-
-function acceptDwandva(id) {
-    fetch(API_BASE + '/api/social/duels/' + id + '/accept', { method: 'POST', headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) { loadDwandva(); }
-    }).catch(function() {});
-}
-
-function cancelDwandva(id) {
-    fetch(API_BASE + '/api/social/duels/' + id + '/cancel', { method: 'POST', headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.success) { loadDwandva(); }
-    }).catch(function() {});
-}
-
-function loadCommunity() {
-    if (!authToken) return;
-    document.getElementById('community-section').style.display = 'block';
-    loadDostList();
-    loadDostRequests();
-    loadFauj();
-    loadDwandva();
-}
-
-if (!userIsLoggedIn) { setTimeout(function() { if (!userIsLoggedIn) { document.getElementById('fomo-banner').style.display = 'block'; } }, 5000); }
-if (window.innerWidth <= 768) { window.location.href = '/zamindar-mobile.html'; }
-map.on('moveend', function() { loadTerritories(); });
-loadTerritories();
-loadCities();
-loadLeaderboard();
-</script>
+    map.on('moveend', function() { loadTerritories(); });
+    loadTerritories(); loadCities(); loadLeaderboard();
+  </script>
 </body>
 </html>
