@@ -9,6 +9,7 @@ const {
   computeDefenceScore,
   applyErosion,
   applyPatrol,
+  estimateLoopCount,
   MIN_ZONE_AREA_M2,
   EROSION_FACTOR,
 } = require('../services/defenceService');
@@ -66,22 +67,36 @@ router.get('/user/:userId', requireAuth, async (req, res) => {
 });
 
 // POST /api/territory-zones/attack
-// Process an attack: a closed run that intersects an existing territory
-// Body: { runId, enclosedPolygon (GeoJSON) }
+// Process an attack: a closed run that intersects an existing territory.
+//
+// Body:
+//   runId          {string}  - UUID of the run
+//   enclosedPolygon {GeoJSON} - the closed loop polygon
+//   loopCount      {number}  - how many times the attacker looped (default 1)
+//                              OR pass runDistanceM + perimeterM to auto-estimate
+//   runDistanceM   {number}  - total run distance in metres (optional, for auto-estimate)
+//   perimeterM     {number}  - polygon perimeter in metres (optional, for auto-estimate)
 router.post('/attack', requireAuth, async (req, res) => {
   const client = await db.pool.connect();
   try {
-    const { runId, enclosedPolygon } = req.body;
+    const { runId, enclosedPolygon, runDistanceM, perimeterM } = req.body;
     const attackerUserId = req.user.id;
 
     if (!runId || !enclosedPolygon) {
       return res.status(400).json({ error: 'runId and enclosedPolygon required' });
     }
 
+    // Resolve loop count: explicit > auto-estimated > default 1
+    let loopCount = parseInt(req.body.loopCount, 10) || 0;
+    if (!loopCount && runDistanceM && perimeterM) {
+      loopCount = estimateLoopCount(runDistanceM, perimeterM);
+    }
+    loopCount = Math.max(1, loopCount || 1);
+
     await client.query('BEGIN');
     const enclosedGeoJSON = JSON.stringify(enclosedPolygon);
 
-    // Find all territory_zones that intersect the attacker's enclosed polygon
+    // Find all territory_zones intersecting the attacker's enclosed polygon
     const { rows: intersecting } = await client.query(`
       SELECT tz.id, tz.parent_zone_id, tz.owner_user_id,
              tz.base_defence, tz.last_patrolled_at, tz.half_life_days, tz.area_m2,
@@ -99,19 +114,24 @@ router.post('/attack', requireAuth, async (req, res) => {
     const results = [];
 
     for (const zone of intersecting) {
-      const currentDefence = computeDefenceScore(zone.base_defence, zone.last_patrolled_at, zone.half_life_days);
-      const { newBaseDefence, triggersTransfer } = applyErosion(currentDefence, EROSION_FACTOR);
+      const currentDefence = computeDefenceScore(
+        zone.base_defence, zone.last_patrolled_at, zone.half_life_days
+      );
+      const { newBaseDefence, triggersTransfer, effectiveErosion } =
+        applyErosion(currentDefence, EROSION_FACTOR, loopCount);
 
-      // Log the attack
+      // Log the attack with loop_count and effective erosion
       await client.query(`
         INSERT INTO zone_attacks (
           territory_zone_id, parent_zone_id, attacker_user_id, run_id,
-          erosion_applied, defence_before, defence_after,
+          erosion_applied, loop_count, defence_before, defence_after,
           attack_polygon, resulted_in_transfer
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,ST_GeomFromGeoJSON($8),$9)
-      `, [zone.id, zone.parent_zone_id, attackerUserId, runId,
-          EROSION_FACTOR, currentDefence, newBaseDefence,
-          JSON.stringify(zone.intersection_polygon), triggersTransfer]);
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,ST_GeomFromGeoJSON($9),$10)
+      `, [
+        zone.id, zone.parent_zone_id, attackerUserId, runId,
+        effectiveErosion, loopCount, currentDefence, newBaseDefence,
+        JSON.stringify(zone.intersection_polygon), triggersTransfer,
+      ]);
 
       if (triggersTransfer) {
         if (zone.fully_contained) {
@@ -122,40 +142,55 @@ router.post('/attack', requireAuth, async (req, res) => {
             WHERE id=$2
           `, [attackerUserId, zone.id]);
           await checkAndTransferParent(client, zone.parent_zone_id, attackerUserId);
-          results.push({ zoneId: zone.id, action: 'full_takeover' });
+          results.push({ zoneId: zone.id, action: 'full_takeover', loopCount });
         } else {
           // Partial split
-          await client.query('UPDATE territory_zones SET is_active=FALSE, updated_at=NOW() WHERE id=$1', [zone.id]);
+          await client.query(
+            'UPDATE territory_zones SET is_active=FALSE, updated_at=NOW() WHERE id=$1',
+            [zone.id]
+          );
 
           await client.query(`
-            INSERT INTO territory_zones (parent_zone_id, owner_user_id, zone_polygon, area_m2, base_defence, last_patrolled_at, half_life_days)
-            SELECT $1,$2,ST_Intersection(zone_polygon,ST_GeomFromGeoJSON($3)),
-                   ST_Area(ST_Intersection(zone_polygon,ST_GeomFromGeoJSON($3))::geography),
-                   1.0,NOW(),$4
+            INSERT INTO territory_zones
+              (parent_zone_id, owner_user_id, zone_polygon, area_m2, base_defence, last_patrolled_at, half_life_days)
+            SELECT $1,$2,
+              ST_Intersection(zone_polygon, ST_GeomFromGeoJSON($3)),
+              ST_Area(ST_Intersection(zone_polygon, ST_GeomFromGeoJSON($3))::geography),
+              1.0, NOW(), $4
             FROM territory_zones WHERE id=$5
           `, [zone.parent_zone_id, attackerUserId, enclosedGeoJSON, zone.half_life_days, zone.id]);
 
           await client.query(`
-            INSERT INTO territory_zones (parent_zone_id, owner_user_id, zone_polygon, area_m2, base_defence, last_patrolled_at, half_life_days)
-            SELECT $1,$2,ST_Difference(zone_polygon,ST_GeomFromGeoJSON($3)),
-                   ST_Area(ST_Difference(zone_polygon,ST_GeomFromGeoJSON($3))::geography),
-                   $4,NOW(),$5
+            INSERT INTO territory_zones
+              (parent_zone_id, owner_user_id, zone_polygon, area_m2, base_defence, last_patrolled_at, half_life_days)
+            SELECT $1,$2,
+              ST_Difference(zone_polygon, ST_GeomFromGeoJSON($3)),
+              ST_Area(ST_Difference(zone_polygon, ST_GeomFromGeoJSON($3))::geography),
+              $4, NOW(), $5
             FROM territory_zones WHERE id=$6
           `, [zone.parent_zone_id, zone.owner_user_id, enclosedGeoJSON, newBaseDefence, zone.half_life_days, zone.id]);
 
-          results.push({ zoneId: zone.id, action: 'split' });
+          results.push({ zoneId: zone.id, action: 'split', loopCount });
         }
       } else {
-        // Defence held - just erode
+        // Defence held - erode and record
         await client.query(`
-          UPDATE territory_zones SET base_defence=$1, last_patrolled_at=NOW(), updated_at=NOW() WHERE id=$2
+          UPDATE territory_zones
+          SET base_defence=$1, last_patrolled_at=NOW(), updated_at=NOW()
+          WHERE id=$2
         `, [newBaseDefence, zone.id]);
-        results.push({ zoneId: zone.id, action: 'eroded', newDefence: newBaseDefence });
+        results.push({
+          zoneId: zone.id,
+          action: 'eroded',
+          loopCount,
+          defenceBefore: currentDefence,
+          defenceAfter: newBaseDefence,
+        });
       }
     }
 
     await client.query('COMMIT');
-    res.json({ success: true, results });
+    res.json({ success: true, loopCount, results });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('POST /territory-zones/attack error:', err);
@@ -166,7 +201,7 @@ router.post('/attack', requireAuth, async (req, res) => {
 });
 
 // POST /api/territory-zones/patrol
-// Process a patrol: owner runs their own territory boundary
+// Process a patrol: owner runs their own territory boundary.
 // Body: { runId, enclosedPolygon (GeoJSON) }
 router.post('/patrol', requireAuth, async (req, res) => {
   const client = await db.pool.connect();
@@ -191,11 +226,15 @@ router.post('/patrol', requireAuth, async (req, res) => {
     const results = [];
 
     for (const zone of patrolled) {
-      const defenceBefore = computeDefenceScore(zone.base_defence, zone.last_patrolled_at, zone.half_life_days);
+      const defenceBefore = computeDefenceScore(
+        zone.base_defence, zone.last_patrolled_at, zone.half_life_days
+      );
       const { newBaseDefence, newLastPatrolledAt } = applyPatrol();
 
       await client.query(`
-        UPDATE territory_zones SET base_defence=$1, last_patrolled_at=$2, updated_at=NOW() WHERE id=$3
+        UPDATE territory_zones
+        SET base_defence=$1, last_patrolled_at=$2, updated_at=NOW()
+        WHERE id=$3
       `, [newBaseDefence, newLastPatrolledAt, zone.id]);
 
       await client.query(`
@@ -203,7 +242,8 @@ router.post('/patrol', requireAuth, async (req, res) => {
           territory_zone_id, parent_zone_id, patroller_user_id, run_id,
           patrol_polygon, coverage_pct, defence_before, defence_after
         ) VALUES ($1,$2,$3,$4,ST_GeomFromGeoJSON($5),1.0,$6,$7)
-      `, [zone.id, zone.parent_zone_id, patrollerUserId, runId, enclosedGeoJSON, defenceBefore, newBaseDefence]);
+      `, [zone.id, zone.parent_zone_id, patrollerUserId, runId,
+          enclosedGeoJSON, defenceBefore, newBaseDefence]);
 
       results.push({ zoneId: zone.id, defenceBefore, defenceAfter: newBaseDefence });
     }
@@ -226,7 +266,7 @@ router.get('/:zoneId/attacks', requireAuth, async (req, res) => {
     const { rows } = await db.query(`
       SELECT za.id, za.territory_zone_id, za.attacker_user_id,
              u.display_name AS attacker_name,
-             za.erosion_applied, za.defence_before, za.defence_after,
+             za.erosion_applied, za.loop_count, za.defence_before, za.defence_after,
              za.resulted_in_transfer, za.attacked_at
       FROM zone_attacks za
       JOIN users u ON u.id = za.attacker_user_id
@@ -246,7 +286,10 @@ async function checkAndTransferParent(client, parentZoneId, newOwnerId) {
     FROM territory_zones WHERE parent_zone_id=$2 AND is_active=TRUE
   `, [newOwnerId, parentZoneId]);
   if (all_transferred) {
-    await client.query('UPDATE zones SET user_id=$1, updated_at=NOW() WHERE id=$2', [newOwnerId, parentZoneId]);
+    await client.query(
+      'UPDATE zones SET user_id=$1, updated_at=NOW() WHERE id=$2',
+      [newOwnerId, parentZoneId]
+    );
   }
 }
 
